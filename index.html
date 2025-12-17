@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>JVS Provozní mapa — PWA (MVP)</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="" crossorigin="anonymous" />
+<style>
+  :root{
+    --bg:#0f1720; --panel:#0b1220; --accent:#d4af37; --muted:#9aa6b2;
+    --radius:12px;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071021 0%, #071827 100%);color:#e6eef6;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  /* safe area + iOS */
+  #app{height:100svh; padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom); display:grid; grid-template-columns:1fr; grid-template-rows: auto 1fr; gap:10px;}
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.02);border-radius:var(--radius);backdrop-filter: blur(6px);}
+  header h1{margin:0;font-size:16px}
+  #map-wrap{height:calc(100svh - 130px); border-radius:10px; overflow:hidden; position:relative;}
+  #map{height:100%; width:100%;}
+  /* Bottom sheet / panel */
+  .panel{position:fixed; right:12px; bottom:12px; width:360px; max-width:92vw; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6); z-index:1200;}
+  .panel .row{display:flex;gap:8px;align-items:center}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);min-height:44px;cursor:pointer;border:0;color:var(--accent);font-weight:600}
+  .btn:active{transform:scale(0.99)}
+  .btn.primary{background:linear-gradient(90deg,#0f3,#d4af37);color:#071827}
+  input,select{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  .stats{margin-top:8px;font-size:13px;color:var(--muted)}
+  .badge{padding:4px 8px;border-radius:999px;background:rgba(212,175,55,0.12);color:var(--accent);font-weight:700}
+  /* popup button list */
+  .pop-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pop-actions button{padding:6px 8px;border-radius:8px;border:0;background:rgba(255,255,255,0.03);color:inherit;min-width:110px;font-size:13px}
+  /* responsive */
+  @media (max-width:600px){ .panel{right:8px; left:8px; width:auto; bottom:8px;} header h1{font-size:14px} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="" alt="" style="width:36px;height:36px;border-radius:8px;background:linear-gradient(90deg,#d4af37,#b5832b)" />
+      <div>
+        <h1>JVS Provozní mapa — mobilní PWA</h1>
+        <div style="font-size:12px;color:var(--muted)">41 areálů — offline friendly • iPhone/Safari optimized</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="btn-reset" class="btn" title="Reset vše"><i class="fa fa-rotate-left"></i> Reset</button>
+      <button id="btn-ai" class="btn primary" title="Generovat protokol (AI)"><i class="fa fa-robot"></i> Protokol</button>
+    </div>
+  </header>
+
+  <div id="map-wrap">
+    <div id="map"></div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="row">
+      <input id="search" placeholder="Hledat název / okres..." style="flex:1" />
+      <select id="filter-cat">
+        <option value="">Všechny kategorie</option>
+        <option value="I.">I.</option>
+        <option value="II.">II.</option>
+      </select>
+      <button id="btn-add" class="btn" title="Přidat areál"><i class="fa fa-plus"></i></button>
+    </div>
+    <div class="stats" id="stats">
+      <div><span class="badge">Celkem 41</span> areálů • Plocha: <strong id="tot-area">198 093</strong> m² • Oplocení: <strong id="tot-fence">10 907</strong> bm</div>
+      <div>Zbývá údržba: <strong id="pending-count">—</strong></div>
+      <div style="margin-top:8px">
+        <button id="btn-route" class="btn"><i class="fa fa-route"></i> Zobrazit trasu</button>
+        <button id="btn-export" class="btn"><i class="fa fa-file-export"></i> Export</button>
+        <button id="btn-layers" class="btn"><i class="fa fa-layer-group"></i> Vrstvy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal area -->
+  <div id="modal-root" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;align-items:center;justify-content:center;">
+    <div id="modal" style="background:var(--panel);padding:16px;border-radius:12px;max-width:92vw;max-height:80vh;overflow:auto;">
+      <div id="modal-title" style="font-weight:700;margin-bottom:8px"></div>
+      <div id="modal-body"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="modal-cancel" class="btn">Zrušit</button>
+        <button id="modal-ok" class="btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARIES -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+<!-- Firebase (placeholders; insert your config) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+/* ======================================================
+   CONFIG / DATA
+   ====================================================== */
+const FIREBASE_CONFIG = {
+  // TODO: vlož svůj Firebase config zde
+  apiKey: "INSERT_FIREBASE_APIKEY",
+  authDomain: "INSERT.firebaseapp.com",
+  projectId: "INSERT",
+  storageBucket: "INSERT.appspot.com",
+  messagingSenderId: "INSERT",
+  appId: "INSERT"
+};
+const GEMINI_API_ENDPOINT = "https://api.example.com/generate"; // TODO: replace at runtime w/ key
+const OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast";
+const CHMU_PROXY = "https://api.allorigins.win/raw?url="; // proxy → použij vlastní proxy pro produkci
+
+/* Static list of 41 objects — zkopírováno z tebou dodaných dat (název, lat, lon, okres, category, area, fence, PI)
+   Note: coordinates jsou převzaté z Google links z původní zprávy */
+const AREALS = [
+  {"name":"VDJ Amerika II","lat":49.305131,"lon":14.166126,"okres":"ST","kat":"I.","area":3303,"fence":293},
+  {"name":"VDJ Drahonice","lat":49.202902,"lon":14.063713,"okres":"ST","kat":"I.","area":5953,"fence":376},
+  {"name":"VDJ Vodňany","lat":49.16455,"lon":14.177836,"okres":"CB","kat":"I.","area":1594,"fence":252},
+  {"name":"VDJ Hlavatce","lat":49.063584,"lon":14.267751,"okres":"PT","kat":"","area":7968,"fence":424},
+  {"name":"VDJ Šibeniční vrch I","lat":49.025083,"lon":13.994111,"okres":"PT","kat":"I.","area":1835,"fence":245},
+  {"name":"ÚV Husinecka přehrada","lat":49.034362,"lon":13.99683,"okres":"PT","kat":"","area":4908,"fence":703},
+  {"name":"VDJ Šibeniční vrch II","lat":49.02671,"lon":13.994001,"okres":"PI","kat":"I.","area":3206,"fence":340},
+  {"name":"VDJ Zálužany","lat":49.552857,"lon":14.083381,"okres":"PT","kat":"","area":2350,"fence":299},
+  {"name":"VDJ Ptáčník","lat":49.066147,"lon":14.186844,"okres":"CB","kat":"II.","area":1070,"fence":239},
+  {"name":"VDJ Zdoba","lat":49.212422,"lon":14.338095,"okres":"CK","kat":"II.","area":15523,"fence":225},
+  {"name":"VDJ Domoradice","lat":48.829651,"lon":14.326564,"okres":"CK","kat":"I.","area":4148,"fence":450},
+  {"name":"VDJ Horní Brána","lat":48.80797,"lon":14.329352,"okres":"CK","kat":"I.","area":1665,"fence":187},
+  {"name":"VDJ Netřebice","lat":48.783277,"lon":14.456447,"okres":"CK","kat":"I.","area":877,"fence":136},
+  {"name":"VDJ Plešivec","lat":48.802231,"lon":14.304933,"okres":"CB","kat":"I.","area":975,"fence":119},
+  {"name":"VDJ Doudleby","lat":48.888896,"lon":14.480271,"okres":"CB","kat":"II.","area":413,"fence":79},
+  {"name":"VDJ Jankov","lat":48.968747,"lon":14.301697,"okres":"CB","kat":"I.","area":784,"fence":106},
+  {"name":"VDJ Hosín II","lat":49.030641,"lon":14.501012,"okres":"CB","kat":"I.","area":4173,"fence":399},
+  {"name":"VDJ Chlum","lat":49.096493,"lon":14.388679,"okres":"CB","kat":"II.","area":535,"fence":63},
+  {"name":"VDJ Chotýčany","lat":49.070748,"lon":14.51946,"okres":"CB","kat":"II.","area":4775,"fence":338},
+  {"name":"VDJ Rudolfov III","lat":48.986207,"lon":14.547076,"okres":"CB","kat":"I.","area":1868,"fence":174},
+  {"name":"VDJ Rimov - Vesce","lat":48.847847,"lon":14.466957,"okres":"CB","kat":"I.","area":662,"fence":99},
+  {"name":"VDJ Hosin","lat":49.033641,"lon":14.492878,"okres":"CB","kat":"II.","area":809,"fence":125},
+  {"name":"VDJ Včelná","lat":48.924663,"lon":14.463506,"okres":"CB","kat":"II.","area":8660,"fence":476},
+  {"name":"VDJ Húry","lat":49.006417,"lon":14.549815,"okres":"CB","kat":"I.","area":395,"fence":0},
+  {"name":"VDJ Chlumec","lat":49.124766,"lon":14.431321,"okres":"CB","kat":"II.","area":811,"fence":110},
+  {"name":"VDJ Olešník","lat":49.111103,"lon":14.377766,"okres":"CB","kat":"I.","area":380,"fence":117},
+  {"name":"ČS Bukovec","lat":48.881608,"lon":14.449233,"okres":"CB","kat":"I.","area":4943,"fence":300},
+  {"name":"VDJ Heřman","lat":48.909479,"lon":14.499876,"okres":"CB","kat":"II.","area":982,"fence":119},
+  {"name":"ČS Vidov u řeky","lat":48.924157,"lon":14.489619,"okres":"CB","kat":"II.","area":2501,"fence":212},
+  {"name":"Vrt Vidov","lat":48.924066,"lon":14.489679,"okres":"CB","kat":"II.","area":470,"fence":164},
+  {"name":"ÚV Plav","lat":48.912611,"lon":14.494018,"okres":"TA","kat":"I.","area":74777,"fence":1413},
+  {"name":"VDJ Čekanice","lat":49.422197,"lon":14.689896,"okres":"TA","kat":"I.","area":6344,"fence":450},
+  {"name":"VDJ Svatá Anna","lat":49.401133,"lon":14.69864,"okres":"TA","kat":"I.","area":4192,"fence":264},
+  {"name":"VDJ Bezděčín","lat":49.323096,"lon":14.628405,"okres":"TA","kat":"I.","area":1996,"fence":169},
+  {"name":"VDJ Milevsko","lat":49.452521,"lon":14.344102,"okres":"TA","kat":"I.","area":823,"fence":129},
+  {"name":"VDJ Hodušín","lat":49.42967,"lon":14.474214,"okres":"TA","kat":"II.","area":1708,"fence":205},
+  {"name":"VDJ Všechov","lat":49.430159,"lon":14.623205,"okres":"TA","kat":"I.","area":1574,"fence":199},
+  {"name":"VDJ Zlukov","lat":49.196289,"lon":14.736382,"okres":"TA","kat":"II.","area":1520,"fence":184},
+  {"name":"ÚV Tábor","lat":49.422872,"lon":14.666426,"okres":"TA","kat":"II.","area":12262,"fence":350},
+  {"name":"ČS Sudoměřice","lat":49.28658,"lon":14.547794,"okres":"TA","kat":"I.","area":2508,"fence":220},
+  {"name":"Provozní Vodojem Tábor","lat":49.424264,"lon":14.666384,"okres":"TA","kat":"II.","area":1853,"fence":155}
+];
+
+/* ======================================================
+   BOOTSTRAP: Firebase + localforage + auth
+   ====================================================== */
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+async function ensureAuthAnon(){
+  try{
+    await auth.signInAnonymously();
+    console.log("Firebase: signed in anonymously");
+  }catch(e){
+    console.warn("Firebase auth failed:", e);
+  }
+}
+ensureAuthAnon();
+
+localforage.config({name:'jvs_provoz', storeName:'jvs_store'});
+
+/* ======================================================
+   MAP INITIALIZATION
+   ====================================================== */
+const map = L.map('map', {
+  zoomControl: false,
+  preferCanvas:true,
+});
+const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'© OSM'});
+const sat = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {maxZoom:19, attribution:'satellite'});
+
+osm.addTo(map);
+map.setView([49.12,14.4],10);
+L.control.zoom({position:'topright'}).addTo(map);
+
+/* Marker cluster group */
+const markersCluster = L.markerClusterGroup();
+let allMarkers = []; // store marker refs
+const routeControl = L.Routing.control({collapsed:true,showAlternatives:false,fitSelectedRoutes:true,routeWhileDragging:true,geocoder: null}).addTo(map);
+
+/* Heat layer (precip/risks) */
+const heatLayer = L.heatLayer([], {radius: 25, blur: 15, maxZoom: 12});
+
+/* Draw control */
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+const drawControl = new L.Control.Draw({
+  edit: {featureGroup: drawnItems},
+  draw: {polygon:true, polyline:true, rectangle:true, circle:false, marker:true}
+});
+map.addControl(drawControl);
+
+/* Lazy load control: only add markers at zoom >= 11 */
+let markersLoaded = false;
+function maybeLoadMarkers(){
+  if(map.getZoom() >= 11 && !markersLoaded){
+    addMarkersToMap(AREALS);
+    markersLoaded = true;
+  } else if (map.getZoom() < 11 && markersLoaded){
+    markersCluster.clearLayers();
+    markersLoaded = false;
+  }
+}
+map.on('zoomend', ()=>{ maybeLoadMarkers(); map.invalidateSize(); });
+
+/* ensure size after orientation change/resizes (iOS Safari) */
+window.addEventListener('orientationchange', ()=>{ setTimeout(()=>map.invalidateSize(),350); });
+window.addEventListener('resize', ()=>{ setTimeout(()=>map.invalidateSize(),200); });
+
+/* ======================================================
+   UTIL FUNCTIONS
+   ====================================================== */
+function formatNumber(n){ return n.toLocaleString('cs-CZ'); }
+function sanitize(text){
+  const div = document.createElement('div');
+  div.innerText = text;
+  return div.innerHTML;
+}
+function gmapsLink(lat,lon){ return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`; }
+
+/* ======================================================
+   MARKERS + POPUP UI
+   ====================================================== */
+function iconForStatus(done){
+  return L.divIcon({
+    className: 'jvs-marker',
+    html: `<div style="width:18px;height:18px;border-radius:50%;background:${done? '#2ecc71':'#e74c3c'};box-shadow:0 2px 6px rgba(0,0,0,0.5);border:2px solid #071827"></div>`,
+    iconSize:[22,22], iconAnchor:[11,11]
+  });
+}
+
+function buildPopupHtml(a, status){
+  const s = status ? 'green' : 'red';
+  return `
+    <div>
+      <strong>${sanitize(a.name)}</strong><br/>
+      <small>${sanitize(a.okres)} • ${sanitize(a.kat || '')}</small>
+      <div style="margin-top:6px;font-size:13px">Plocha: <strong>${formatNumber(a.area)} m²</strong><br/>Oplocení: <strong>${formatNumber(a.fence)} bm</strong></div>
+      <div class="pop-actions">
+        <button data-action="route">${status? 'V trase' : 'Přidat do trasy'}</button>
+        <button data-action="toggle">${status? 'Zpět na čekání' : 'Hotovo'}</button>
+        <button data-action="edit">Upravit</button>
+        <button data-action="delete">Zrušit</button>
+        <a href="${gmapsLink(a.lat,a.lon)}" target="_blank" rel="noopener noreferrer"><button>Google Maps</button></a>
+      </div>
+      <div style="margin-top:8px;font-size:13px;color:${s}">Živá data: <span id="live-${a.name.replace(/\s+/g,'_')}">načítám…</span></div>
+    </div>
+  `;
+}
+
+/* store statuses in localForage */
+async function loadStatuses(){
+  const s = (await localforage.getItem('statuses')) || {};
+  return s;
+}
+async function saveStatuses(st){
+  await localforage.setItem('statuses', st);
+}
+
+/* Add markers into cluster */
+async function addMarkersToMap(list){
+  const statuses = await loadStatuses();
+  markersCluster.clearLayers();
+  allMarkers = [];
+  list.forEach(a=>{
+    const done = !!statuses[a.name];
+    const m = L.marker([a.lat,a.lon], {icon: iconForStatus(done), title: a.name});
+    m.bindPopup(buildPopupHtml(a, done), {maxWidth:320});
+    m.on('popupopen', ()=>onPopupOpen(a,m));
+    m._areal = a;
+    m._done = done;
+    allMarkers.push(m);
+    markersCluster.addLayer(m);
+  });
+  map.addLayer(markersCluster);
+  updatePendingCount();
+}
+
+/* handle click actions inside popup */
+async function onPopupOpen(a,m){
+  const statuses = await loadStatuses();
+  const nameId = `live-${a.name.replace(/\s+/g,'_')}`;
+  // attach click handlers (delegation)
+  const pop = m.getPopup();
+  const container = pop.getElement();
+  if(!container) return;
+  container.querySelectorAll('button').forEach(btn=>{
+    btn.onclick = async (ev)=>{
+      const action = btn.getAttribute('data-action');
+      if(action === 'route'){
+        addToRoute(a);
+      } else if(action === 'toggle'){
+        statuses[a.name] = !statuses[a.name];
+        await saveStatuses(statuses);
+        m.setIcon(iconForStatus(statuses[a.name]));
+        m._done = statuses[a.name];
+        m.closePopup();
+        updatePendingCount();
+      } else if(action === 'edit'){
+        openEditModal(a);
+      } else if(action === 'delete'){
+        if(confirm(`Smazat ${a.name}?`)){
+          removeAreal(a);
+          m.closePopup();
+        }
+      }
+    };
+  });
+  // fetch live data and show in popup
+  fetchLiveData(a).then(html=>{
+    const el = container.querySelector(`#${nameId}`);
+    if(el) el.innerHTML = html;
+  }).catch(err=>{
+    const el = container.querySelector(`#${nameId}`);
+    if(el) el.innerHTML = '—';
+    console.warn("live fetch failed",err);
+  });
+}
+
+/* ======================================================
+   LIVE DATA (Open-Meteo) — throttled & cached
+   ====================================================== */
+const LIVE_CACHE_TTL = 10 * 60 * 1000; // 10 min
+async function fetchLiveData(a){
+  const cacheKey = `live_${a.lat}_${a.lon}`;
+  const cached = (await localforage.getItem(cacheKey)) || null;
+  if(cached && (Date.now() - cached.ts) < LIVE_CACHE_TTL){
+    return cached.html;
+  }
+  // Request Open-Meteo current weather + hourly precipitation + air quality (PM2.5) if supported
+  const url = `${OPEN_METEO_BASE}?latitude=${a.lat}&longitude=${a.lon}&current_weather=true&hourly=precipitation,cloudcover,uv_index&timezone=Europe%2FBerlin`;
+  const resp = await fetch(url);
+  if(!resp.ok) throw new Error('Open-Meteo error');
+  const js = await resp.json();
+  const cur = js.current_weather || {};
+  // air quality (Open-Meteo separate endpoint)
+  // NOTE: open-meteo has an "air_quality" parameter; attempt best-effort
+  let aqiHtml = '';
+  try{
+    const aqResp = await fetch(`${OPEN_METEO_BASE}?latitude=${a.lat}&longitude=${a.lon}&hourly=pm2_5&timezone=Europe%2FBerlin`);
+    if(aqResp.ok){
+      const aq = await aqResp.json();
+      const pm = (aq.hourly && aq.hourly.pm2_5 && aq.hourly.pm2_5[0]) || null;
+      aqiHtml = pm ? ` • PM2.5: ${pm} µg/m³` : '';
+    }
+  }catch(e){ /* ignore */ }
+
+  const html = `T: ${cur.temperature ?? '—'}°C • V: ${cur.windspeed ?? '—'} m/s • Srážky: ${ (js.hourly && js.hourly.precipitation && js.hourly.precipitation[0]) ?? '—'} mm${aqiHtml}`;
+  await localforage.setItem(cacheKey, {ts:Date.now(), html});
+  // also optionally push heat point if precipitation > threshold
+  try{
+    const precipNow = (js.hourly && js.hourly.precipitation && js.hourly.precipitation[0]) || 0;
+    if(precipNow > 2){
+      heatLayer.addLatLng([a.lat,a.lon,precipNow]);
+      if(!map.hasLayer(heatLayer)) heatLayer.addTo(map);
+    }
+  }catch(e){}
+  return html;
+}
+
+/* ======================================================
+   ROUTING / TRIP MANAGEMENT
+   ====================================================== */
+let routeList = []; // ordered array of areal objects
+function addToRoute(a){
+  if(routeList.find(x=>x.name === a.name)) return alert("Již v trase");
+  routeList.push(a);
+  rebuildRoute();
+}
+function removeFromRoute(a){
+  routeList = routeList.filter(x=>x.name !== a.name);
+  rebuildRoute();
+}
+function rebuildRoute(){
+  if(routeList.length < 2){
+    routeControl.setWaypoints([]);
+    return;
+  }
+  const wpts = routeList.map(r=>L.latLng(r.lat,r.lon));
+  routeControl.setWaypoints(wpts);
+  // show popup stats ETA & distance will be handled by routing callbacks
+}
+routeControl.on('routesfound', function(e){
+  const routes = e.routes;
+  if(routes && routes.length){
+    const d = routes[0].summary.totalDistance; // meters
+    const t = routes[0].summary.totalTime; // sec
+    setTimeout(()=>alert(`Trasa: ${Math.round(d/1000)} km • ETA: ${Math.round(t/60)} min`), 200);
+  }
+});
+
+/* Drag&drop waypoints editing support */
+routeControl.on('waypointschanged', ()=>{ /* waypoint order changed */ });
+
+/* ======================================================
+   EDIT / CRUD for AREALS (local + Firebase sync)
+   ====================================================== */
+async function openEditModal(a){
+  const modalRoot = document.getElementById('modal-root');
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+  const ok = document.getElementById('modal-ok');
+  const cancel = document.getElementById('modal-cancel');
+  title.textContent = 'Upravit areál';
+  body.innerHTML = `
+    <div style="display:grid;gap:8px">
+      <label>Název <input id="m-name" value="${sanitize(a.name)}" /></label>
+      <label>Okres <input id="m-okres" value="${sanitize(a.okres)}" /></label>
+      <label>Kategorie <select id="m-kat"><option ${a.kat==='I.'?'selected':''}>I.</option><option ${a.kat==='II.'?'selected':''}>II.</option></select></label>
+      <label>Plocha (m²) <input id="m-area" type="number" value="${a.area}" /></label>
+      <label>Oplocení (bm) <input id="m-fence" type="number" value="${a.fence}" /></label>
+      <label>Souřadnice (lat,lon) <input id="m-loc" value="${a.lat},${a.lon}" /></label>
+    </div>
+  `;
+  modalRoot.style.display = 'flex';
+  return new Promise((resolve)=>{
+    cancel.onclick = ()=>{ modalRoot.style.display='none'; resolve(false); };
+    ok.onclick = async ()=>{
+      const nm = document.getElementById('m-name').value.trim();
+      const okr = document.getElementById('m-okres').value.trim();
+      const kat = document.getElementById('m-kat').value;
+      const area = parseFloat(document.getElementById('m-area').value) || 0;
+      const fence = parseFloat(document.getElementById('m-fence').value) || 0;
+      const loc = document.getElementById('m-loc').value.split(',').map(s=>parseFloat(s.trim()));
+      if(!nm || area<=0 || loc.length<2 || isNaN(loc[0]) || isNaN(loc[1])){
+        alert('Chybný input — zkontroluj souřadnice a plochu.');
+        return;
+      }
+      // apply edits locally
+      a.name = nm; a.okres = okr; a.kat = kat; a.area = area; a.fence = fence; a.lat = loc[0]; a.lon = loc[1];
+      await persistAreals();
+      modalRoot.style.display='none';
+      reloadAllMarkers();
+      resolve(true);
+    };
+  });
+}
+
+async function removeAreal(a){
+  const idx = AREALS.findIndex(x=>x.name===a.name);
+  if(idx>=0) AREALS.splice(idx,1);
+  await persistAreals();
+  reloadAllMarkers();
+}
+
+async function persistAreals(){
+  // store in localforage and attempt firebase writeBatch merge
+  await localforage.setItem('areals', AREALS);
+  try{
+    const batch = db.batch ? db.batch() : null;
+    // For simplicity: write single document JVS/areals (merge)
+    if(db && db.collection){
+      const ref = db.collection('jvs').doc('areals');
+      await ref.set({list:AREALS, updated: firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
+    }
+  }catch(e){ console.warn('Firebase write failed',e); }
+}
+
+async function reloadAllMarkers(){
+  markersCluster.clearLayers();
+  markersLoaded = false;
+  maybeLoadMarkers();
+}
+
+/* ======================================================
+   EXPORT (GeoJSON / CSV)
+   ====================================================== */
+function exportGeoJSON(){
+  const features = AREALS.map(a=>({
+    type: "Feature",
+    properties: {name:a.name,okres:a.okres,kat:a.kat,area:a.area,fence:a.fence},
+    geometry: {type:"Point",coordinates:[a.lon,a.lat]}
+  }));
+  const geo = {type:"FeatureCollection",features};
+  const blob = new Blob([JSON.stringify(geo, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='arealy.geojson'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+function exportCSV(){
+  const hdr = ['name,okres,kat,area,fence,lat,lon\n'];
+  const rows = AREALS.map(a=>`${JSON.stringify(a.name)},${a.okres},${a.kat},${a.area},${a.fence},${a.lat},${a.lon}\n`);
+  const blob = new Blob([hdr.join('') + rows.join('')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='arealy.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+/* ======================================================
+   AI PROTOKOL (Gemini) — compose prompt & call fetch
+   ====================================================== */
+async function generateProtocol(){
+  if(!GEMINI_API_ENDPOINT.includes('example')){ /* if user replaced endpoint */
+    const prompt = buildProtocolPrompt();
+    // call Gemini API (user must have set endpoint & key)
+    const res = await fetch(GEMINI_API_ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer INSERT_GEMINI_KEY_HERE'},
+      body: JSON.stringify({prompt, max_tokens:800})
+    });
+    const js = await res.json();
+    return js.text || JSON.stringify(js);
+  } else {
+    // fallback mock generator (useful for offline demos)
+    return `Protokol (mock)\nDatum: ${new Date().toLocaleString()}\nNavštívené areály: ${routeList.map(r=>r.name).join(', ')}\nOdhad času: ${routeList.length * 20} min\nChecklist: viz seznam...`;
+  }
+}
+function buildProtocolPrompt(){
+  const rnames = routeList.map(r=>`${r.name} (${r.okres})`).join('; ');
+  return `Vytvoř stručný inspekční protokol pro trasu: ${rnames}. Uveď: souhrn trasy, odhad času, kontrolní body pro travnaté plochy a oplocení, doporučení pro zásah (sekání, oprava oplocení), a krátký checklist.`;
+}
+
+/* ======================================================
+   UI Wiring: buttons, filters, search
+   ====================================================== */
+document.getElementById('btn-reset').onclick = async ()=>{
+  if(!confirm('Resetovat lokální změny a obnovit výchozí data?')) return;
+  await localforage.removeItem('areals');
+  await localforage.removeItem('statuses');
+  location.reload();
+};
+document.getElementById('btn-add').onclick = ()=>openAddModal();
+document.getElementById('btn-export').onclick = ()=>{ exportGeoJSON(); exportCSV(); alert('Export vygenerován'); };
+document.getElementById('btn-route').onclick = ()=>{ if(routeList.length<2) alert('Přidej alespoň 2 body do trasy'); else routeControl.show(); };
+document.getElementById('btn-ai').onclick = async ()=>{
+  const modalRoot = document.getElementById('modal-root');
+  document.getElementById('modal-title').innerText = 'Generuji protokol…';
+  document.getElementById('modal-body').innerHTML = `<div>Probíhá volání AI…</div>`;
+  modalRoot.style.display = 'flex';
+  try{
+    const text = await generateProtocol();
+    document.getElementById('modal-title').innerText = 'Protokol (AI)';
+    document.getElementById('modal-body').innerHTML = `<pre style="white-space:pre-wrap">${sanitize(text)}</pre>`;
+    document.getElementById('modal-ok').onclick = ()=>{ modalRoot.style.display='none'; navigator.clipboard?.writeText(text); alert('Skopírováno do schránky'); };
+    document.getElementById('modal-cancel').onclick = ()=> modalRoot.style.display='none';
+  }catch(e){
+    document.getElementById('modal-body').innerText = 'Chyba při volání AI: ' + e.message;
+  }
+};
+
+function openAddModal(){
+  const modalRoot = document.getElementById('modal-root');
+  document.getElementById('modal-title').innerText = 'Přidat nový areál';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;gap:8px">
+      <label>Název <input id="m-name" /></label>
+      <label>Okres <input id="m-okres" /></label>
+      <label>Kategorie <select id="m-kat"><option>I.</option><option>II.</option></select></label>
+      <label>Plocha (m²) <input id="m-area" type="number" /></label>
+      <label>Oplocení (bm) <input id="m-fence" type="number" /></label>
+      <label>Souřadnice (lat,lon) <input id="m-loc" placeholder="49.1234,14.5678" /></label>
+    </div>
+  `;
+  modalRoot.style.display = 'flex';
+  document.getElementById('modal-cancel').onclick = ()=> modalRoot.style.display='none';
+  document.getElementById('modal-ok').onclick = async ()=>{
+    const nm = document.getElementById('m-name').value.trim();
+    const okr = document.getElementById('m-okres').value.trim();
+    const kat = document.getElementById('m-kat').value;
+    const area = parseFloat(document.getElementById('m-area').value) || 0;
+    const fence = parseFloat(document.getElementById('m-fence').value) || 0;
+    const loc = (document.getElementById('m-loc').value || '').split(',').map(s=>parseFloat(s.trim()));
+    if(!nm || area<=0 || loc.length<2 || isNaN(loc[0]) || isNaN(loc[1])){
+      alert('Chybný input — zkontroluj souřadnice a plochu.'); return;
+    }
+    const newA = {name:nm,okres:okr,kat,area,fence,lat:loc[0],lon:loc[1]};
+    AREALS.push(newA);
+    await persistAreals();
+    document.getElementById('modal-root').style.display='none';
+    reloadAllMarkers();
+  };
+}
+
+/* Search & filter */
+document.getElementById('search').addEventListener('input', debounce(function(e){
+  const q = e.target.value.trim().toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const filtered = AREALS.filter(a=>{
+    if(cat && a.kat!==cat) return false;
+    if(!q) return true;
+    return (a.name.toLowerCase().includes(q) || (a.okres||'').toLowerCase().includes(q));
+  });
+  // reload markers for filtered set
+  markersCluster.clearLayers();
+  markersLoaded = false;
+  addMarkersToMap(filtered);
+}, 500));
+document.getElementById('filter-cat').onchange = ()=> document.getElementById('search').dispatchEvent(new Event('input'));
+
+/* pending count */
+async function updatePendingCount(){
+  const st = await loadStatuses();
+  const pending = AREALS.filter(a=> !st[a.name]).length;
+  document.getElementById('pending-count').innerText = pending;
+}
+
+/* reload if local stored areals exist */
+(async function init(){
+  const stored = await localforage.getItem('areals');
+  if(stored && Array.isArray(stored) && stored.length) {
+    // replace AREALS in-memory
+    AREALS.splice(0,AREALS.length,...stored);
+  }
+  // load markers initially if zoom high
+  maybeLoadMarkers();
+  // restore last live heatLayer if cached
+  const heatCache = await localforage.getItem('heat_points') || [];
+  if(heatCache.length) { heatCache.forEach(p=>heatLayer.addLatLng(p)); map.addLayer(heatLayer); }
+  updatePendingCount();
+})();
+
+/* helper: debounce */
+function debounce(fn,ms){ let t; return function(...a){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a),ms); }; }
+
+/* ======================================================
+   OFFLINE: register service worker
+   ====================================================== */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(r=>console.log('sw registered',r)).catch(e=>console.warn('sw reg failed',e));
+}
+
+/* helper: compute totals (for panel) */
+(function setTotals(){
+  const totArea = AREALS.reduce((s,a)=>s+(a.area||0),0);
+  const totFence = AREALS.reduce((s,a)=>s+(a.fence||0),0);
+  document.getElementById('tot-area').innerText = formatNumber(totArea);
+  document.getElementById('tot-fence').innerText = formatNumber(totFence);
+})();
+
+</script>
+</body>
+</html>
