@@ -1,1073 +1,125 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2563eb">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>JVS Provozní mapa</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>JVS – Vodárenský Management</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    <!-- Leaflet & Extensions -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<style>
+html, body { margin:0; padding:0; height:100%; width:100%; font-family:'Inter',sans-serif; background:#0f172a; color:#f8fafc; }
+#map { height:100dvh; width:100vw; z-index:0; }
+button, select, input { font-family:inherit; }
 
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+/* ✅ Dark mode styling */
+.leaflet-container { background:#1e293b; }
+.sidebar { background:rgba(30,41,59,0.9); color:white; backdrop-filter:blur(10px); }
+.panel-section { background:#1e293b; border:1px solid #334155; }
+.panel-head { background:#334155; color:#f8fafc; }
+.btn-primary { background:#2563eb; color:white; }
+.btn-secondary { background:#475569; color:white; }
+.legend-floating { background:#1e293b; color:white; border:1px solid #334155; }
+.quick-stats { background:#1e293b; color:white; border:1px solid #334155; }
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Nastavení Tailwind configu pro tmavý, elegantní design a responsivitu
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#3b82f6', // Modrá (Blue 500)
-                        secondary: '#1f2937', // Tmavě šedá (Gray 800)
-                        success: '#10b981', // Zelená (Emerald 500)
-                        danger: '#ef4444', // Červená (Red 500)
-                        warning: '#f59e0b', // Oranžová (Amber 500)
-                        background: '#0f172a' // Tmavě modrá (Slate 900)
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        /* Základní styly pro mobilní optimalizaci a iOS 100dvh fix */
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0f172a; color: #e5e7eb; font-family: 'Inter', system-ui; }
-        #mapWrapper { height: 100dvh; width: 100%; position: relative; }
-        
-        /* Fallback pro starší iOS */
-        @supports (-webkit-touch-callout: none) {
-            body, #mapWrapper { height: -webkit-fill-available; }
-        }
-        
-        /* Bottom Sheet Panel */
-        .panel { 
-            transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-height: 90vh; /* Omezuje panel, aby se nezakryl celý displej */
-        }
-        
-        /* Map fixy */
-        #map { height: 100%; width: 100%; }
-        .leaflet-popup-content-wrapper { background: #1f2937; color: #e5e7eb; border-radius: 0.75rem; }
-        .leaflet-popup-tip { background: #1f2937; }
-        .leaflet-draw-section a { color: #3b82f6 !important; }
-
-        /* Toast Notifikace */
-        .toast {
-            animation: fadeInOut 4s ease-in-out forwards;
-            pointer-events: none;
-        }
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
-        }
-
-        /* Loading Spinner */
-        .spinner { border: 4px solid rgba(255,255,255,.1); border-left-color: #3b82f6; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0) } 100% { transform: rotate(360deg) } }
-    </style>
+/* iOS fullscreen fix */
+@supports (-webkit-touch-callout: none) {
+  #map { height:-webkit-fill-available; }
+}
+</style>
 </head>
 
-<body class="bg-background text-white">
+<body>
+<div id="map"></div>
 
-<!-- Header -->
-<header class="fixed top-0 left-0 right-0 z-[1000] bg-background/90 backdrop-blur flex items-center justify-between p-4 shadow-xl">
-    <div class="flex items-center gap-2">
-        <i class="fas fa-water text-primary text-2xl"></i>
-        <h1 class="text-xl font-bold">JVS Provoz</h1>
-        <span id="userIdDisplay" class="text-xs opacity-50 ml-2">ID: ...</span>
-    </div>
-    <div class="flex gap-2">
-        <button id="locateBtn" class="bg-primary/20 text-primary p-3 rounded-full text-lg shadow-lg hover:bg-primary/30 transition-colors"><i class="fas fa-location-crosshairs"></i></button>
-        <button onclick="togglePanel()" class="bg-primary/20 text-primary p-3 rounded-full text-lg shadow-lg hover:bg-primary/30 transition-colors"><i class="fas fa-sliders-h"></i></button>
-    </div>
-</header>
-
-<!-- Map Container -->
-<div id="mapWrapper">
-    <div id="map"></div>
+<!-- Quick stats -->
+<div class="quick-stats" id="quickStats" style="position:absolute;bottom:20px;right:20px;padding:10px;border-radius:12px;z-index:1000;">
+  <span id="qsCount">41</span> areálů | <span id="qsArea">198.1k m²</span>
 </div>
 
-<!-- Toast Notifications Container -->
-<div id="toastContainer" class="fixed top-20 right-4 z-[1001] space-y-2"></div>
-
-<!-- Modal Container (for Add/Edit) -->
-<div id="modal" class="fixed inset-0 bg-black/70 z-[1002] flex items-center justify-center p-4 hidden">
-    <div id="modalContent" class="bg-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-        <h2 id="modalTitle" class="text-xl font-bold text-primary"></h2>
-        <form id="areaForm" class="space-y-3">
-            <input type="hidden" id="areaIndex">
-            <input type="hidden" id="areaLat">
-            <input type="hidden" id="areaLng">
-            
-            <label class="block">Název:<input type="text" id="areaName" required class="w-full p-3 rounded bg-slate-700 border border-slate-600 focus:ring-primary focus:border-primary"></label>
-            <label class="block">Okres:<input type="text" id="areaDistrict" required class="w-full p-3 rounded bg-slate-700 border border-slate-600"></label>
-            <label class="block">Kategorie (I./II./prázdné):<input type="text" id="areaCategory" class="w-full p-3 rounded bg-slate-700 border border-slate-600"></label>
-            <label class="block">Plocha (m²):<input type="number" id="areaArea" required class="w-full p-3 rounded bg-slate-700 border border-slate-600"></label>
-            <label class="block">Oplocení (bm):<input type="number" id="areaFence" required class="w-full p-3 rounded bg-slate-700 border border-slate-600"></label>
-
-            <button type="submit" class="w-full bg-success py-3 rounded-lg text-lg font-semibold hover:bg-success/90 transition-colors">Uložit změny</button>
-            <button type="button" onclick="hideModal()" class="w-full bg-slate-600 py-3 rounded-lg text-lg font-semibold mt-2 hover:bg-slate-500 transition-colors">Zrušit</button>
-        </form>
-    </div>
-</div>
-
-<!-- Bottom Sheet Panel -->
-<div class="fixed bottom-0 left-0 right-0 z-[1000] bg-secondary/95 backdrop-blur rounded-t-3xl shadow-2xl panel" id="panel" style="transform:translateY(calc(100% - 70px))">
-    <!-- Handle pro vysunutí -->
-    <div class="h-[70px] flex items-center justify-center cursor-pointer" onclick="togglePanel()">
-        <i class="fas fa-chevron-up text-3xl text-primary/70 transition-transform duration-300" id="panelHandleIcon"></i>
-    </div>
-    
-    <div class="p-4 space-y-6 overflow-y-auto" id="panelContent">
-        
-        <div class="section bg-slate-800 p-4 rounded-xl shadow-inner">
-            <h2 class="text-lg font-bold mb-3 text-primary">📊 Souhrn & Filtry</h2>
-            
-            <!-- Souhrnné statistiky -->
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="bg-slate-700 p-3 rounded-lg text-center">
-                    <div class="text-xl font-bold" id="totalArea">0</div>
-                    <div class="text-xs opacity-70">Celková plocha (m²)</div>
-                </div>
-                <div class="bg-slate-700 p-3 rounded-lg text-center">
-                    <div class="text-xl font-bold text-danger" id="remainingArea">0</div>
-                    <div class="text-xs opacity-70">Zbývá sekat (m²)</div>
-                </div>
-                <div class="bg-slate-700 p-3 rounded-lg text-center">
-                    <div class="text-xl font-bold" id="totalFence">0</div>
-                    <div class="text-xs opacity-70">Oplocení (bm)</div>
-                </div>
-                <div class="bg-slate-700 p-3 rounded-lg text-center">
-                    <div class="text-xl font-bold" id="objectCount">0</div>
-                    <div class="text-xs opacity-70">Areálů (filtr)</div>
-                </div>
-            </div>
-
-            <!-- Filtry -->
-            <input id="searchInput" type="text" placeholder="Hledat název areálu..." class="w-full p-3 rounded bg-slate-700 border border-slate-600 mt-2">
-            <select id="districtFilter" class="w-full p-3 rounded bg-slate-700 border border-slate-600 mt-2">
-                <option value="">Všechny okresy</option>
-            </select>
-            <div class="mt-2 flex gap-2">
-                <label for="heatmapToggle" class="flex-grow flex items-center justify-between bg-slate-700 p-3 rounded-lg cursor-pointer">
-                    <span>Heatmapa rizika</span>
-                    <input type="checkbox" id="heatmapToggle" class="w-5 h-5 text-primary bg-slate-600 border-slate-500 rounded focus:ring-primary" onchange="toggleHeatmap()">
-                </label>
-                <label for="maintainedToggle" class="flex-grow flex items-center justify-between bg-slate-700 p-3 rounded-lg cursor-pointer">
-                    <span>Jen k údržbě</span>
-                    <input type="checkbox" id="maintainedToggle" class="w-5 h-5 text-primary bg-slate-600 border-slate-500 rounded focus:ring-primary">
-                </label>
-            </div>
-            
-        </div>
-
-        <div class="section bg-slate-800 p-4 rounded-xl shadow-inner">
-            <h2 class="text-lg font-bold mb-3 text-primary">🗺️ Trasa a Navigace</h2>
-            <div id="routeStatus" class="text-sm opacity-80 mb-3">Trasa není aktivní. Přidejte alespoň 2 areály.</div>
-            <div id="routeList" class="space-y-2 mb-4">
-                <!-- Zde se dynamicky naplní body trasy -->
-            </div>
-            <button onclick="resetRoute()" class="w-full bg-warning py-3 rounded-lg mb-2"><i class="fas fa-route"></i> Reset trasy</button>
-            <button onclick="generateAIReport()" class="w-full bg-purple-600 py-3 rounded-lg"><i class="fas fa-robot"></i> Generovat AI Protokol</button>
-        </div>
-
-        <div class="section bg-slate-800 p-4 rounded-xl shadow-inner">
-            <h2 class="text-lg font-bold mb-3 text-primary">☁️ Počasí v centru mapy</h2>
-            <div id="weatherContent" class="text-center py-4 text-sm"><div class="spinner"></div></div>
-        </div>
-
-        <div class="section">
-             <button onclick="addNewAreaInit()" class="w-full bg-success py-3 rounded-lg text-lg font-semibold"><i class="fas fa-plus"></i> Přidat nový areál</button>
-        </div>
-        
-        <div class="section text-center p-4">
-             <button onclick="resetAllData()" class="text-sm text-danger/70 hover:text-danger">Globální Reset Dat (vymaže lokální data i trasu)</button>
-        </div>
-        
-    </div>
+<!-- Legend -->
+<div class="legend-floating" style="position:absolute;bottom:20px;left:20px;padding:10px;border-radius:8px;z-index:1000;">
+  <div><span style="color:#ef4444;">●</span> Kat. I</div>
+  <div><span style="color:#f97316;">●</span> Kat. II</div>
+  <div><span style="color:#94a3b8;">●</span> Bez kat.</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
-<!-- Firebase -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Globální proměnné z Canvas prostředí
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-    // Přidáme proměnné do window pro přístup z venkovního skriptu
-    window.db = null;
-    window.auth = null;
-    window.userId = null;
-    window.serverTimestamp = serverTimestamp;
-    window.doc = doc;
-    window.updateDoc = updateDoc;
-    window.deleteDoc = deleteDoc;
-    window.setDoc = setDoc;
-    window.addDoc = addDoc;
-    window.collection = collection;
-    window.onSnapshot = onSnapshot;
-
-    setLogLevel('error'); // Omezíme logování
-
-    if (Object.keys(firebaseConfig).length > 0) {
-        const app = initializeApp(firebaseConfig);
-        window.db = getFirestore(app);
-        window.auth = getAuth(app);
-
-        // Anonymní nebo custom přihlášení
-        onAuthStateChanged(window.auth, async (user) => {
-            if (user) {
-                window.userId = user.uid;
-                document.getElementById('userIdDisplay').textContent = `ID: ${user.uid.substring(0, 8)}...`;
-            } else {
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(window.auth, initialAuthToken);
-                        window.userId = window.auth.currentUser.uid;
-                        document.getElementById('userIdDisplay').textContent = `ID: ${window.userId.substring(0, 8)}...`;
-                    } else {
-                        await signInAnonymously(window.auth);
-                        window.userId = window.auth.currentUser.uid;
-                        document.getElementById('userIdDisplay').textContent = `ID: ${window.userId.substring(0, 8)} (anonym)`;
-                    }
-                } catch (error) {
-                    console.error("Chyba přihlášení Firebase:", error);
-                    window.userId = crypto.randomUUID(); // Fallback pro neautentizovaného uživatele
-                    document.getElementById('userIdDisplay').textContent = `ID: GUEST`;
-                }
-            }
-            // Po dokončení autentizace inicializujeme aplikaci
-            window.isAuthReady = true;
-            window.initApp(); 
-        });
-    } else {
-        console.warn("Firebase config není k dispozici. Používám pouze LocalStorage.");
-        window.userId = crypto.randomUUID();
-        document.getElementById('userIdDisplay').textContent = `ID: OFFLINE`;
-        window.isAuthReady = true;
-        window.initApp();
-    }
-</script>
-
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
 <script>
-// === DATA AREÁLŮ (41 položek) ===
-// Rozšířeno o last_maintenance (pro simulaci rizika)
-const initialAreas = [
-  {id: 'vdj_amerika_ii', name:"VDJ Amerika II",district:"PI",lat:49.305131,lng:14.166126,area:3303,fence:293,cat:"I.", last_maintenance: '2025-05-15', is_maintained: false},
-  {id: 'vdj_drahonice', name:"VDJ Drahonice",district:"ST",lat:49.202902,lng:14.063713,area:5953,fence:376,cat:"I.", last_maintenance: '2025-06-20', is_maintained: false},
-  {id: 'vdj_vodnany', name:"VDJ Vodňany",district:"ST",lat:49.164550,lng:14.177836,area:1594,fence:252,cat:"I.", last_maintenance: '2025-06-25', is_maintained: false},
-  {id: 'vdj_hlavatce', name:"VDJ Hlavatce",district:"CB",lat:49.063584,lng:14.267751,area:7968,fence:424,cat:"B", last_maintenance: '2025-04-10', is_maintained: false}, // Bez kategorie (B)
-  {id: 'vdj_sibenicni_vrch_i', name:"VDJ Šibeniční vrch I",district:"PT",lat:49.025083,lng:13.994111,area:1835,fence:245,cat:"I.", last_maintenance: '2025-07-01', is_maintained: false},
-  {id: 'uv_husinecka', name:"ÚV Husinecka přehrada",district:"PT",lat:49.034362,lng:13.996830,area:4908,fence:703,cat:"B", last_maintenance: '2025-05-01', is_maintained: false}, // Bez kategorie (B)
-  {id: 'vdj_sibenicni_vrch_ii', name:"VDJ Šibeniční vrch II",district:"PT",lat:49.026710,lng:13.994001,area:3206,fence:340,cat:"I.", last_maintenance: '2025-06-05', is_maintained: false},
-  {id: 'vdj_zaluzany', name:"VDJ Zálužany",district:"PI",lat:49.552857,lng:14.083381,area:2350,fence:299,cat:"B", last_maintenance: '2025-04-20', is_maintained: false}, // Bez kategorie (B)
-  {id: 'vdj_ptacnik', name:"VDJ Ptáčník",district:"PT",lat:49.066147,lng:14.186844,area:1070,fence:239,cat:"II.", last_maintenance: '2025-07-10', is_maintained: false},
-  {id: 'vdj_zdoba', name:"VDJ Zdoba",district:"CB",lat:49.212422,lng:14.338095,area:15523,fence:225,cat:"II.", last_maintenance: '2025-05-25', is_maintained: false},
-  {id: 'vdj_domoradice', name:"VDJ Domoradice",district:"CK",lat:48.829651,lng:14.326564,area:4148,fence:450,cat:"I.", last_maintenance: '2025-06-01', is_maintained: false},
-  {id: 'vdj_horni_brana', name:"VDJ Horní Brána",district:"CK",lat:48.807970,lng:14.329352,area:1665,fence:187,cat:"I.", last_maintenance: '2025-07-15', is_maintained: false},
-  {id: 'vdj_netrebice', name:"VDJ Netřebice",district:"CK",lat:48.783277,lng:14.456447,area:877,fence:136,cat:"I.", last_maintenance: '2025-06-18', is_maintained: false},
-  {id: 'vdj_plesivec', name:"VDJ Plešivec",district:"CK",lat:48.802231,lng:14.304933,area:975,fence:119,cat:"I.", last_maintenance: '2025-07-05', is_maintained: false},
-  {id: 'vdj_doudleby', name:"VDJ Doudleby",district:"CB",lat:48.888896,lng:14.480271,area:413,fence:79,cat:"II.", last_maintenance: '2025-05-10', is_maintained: false},
-  {id: 'vdj_jankov', name:"VDJ Jankov",district:"CB",lat:48.968747,lng:14.301697,area:784,fence:106,cat:"I.", last_maintenance: '2025-07-08', is_maintained: false},
-  {id: 'vdj_hosin_ii', name:"VDJ Hosín II",district:"CB",lat:49.030641,lng:14.501012,area:4173,fence:399,cat:"I.", last_maintenance: '2025-06-12', is_maintained: false},
-  {id: 'vdj_chlum', name:"VDJ Chlum",district:"CB",lat:49.096493,lng:14.388679,area:535,fence:63,cat:"II.", last_maintenance: '2025-07-03', is_maintained: false},
-  {id: 'vdj_chotycany', name:"VDJ Chotýčany",district:"CB",lat:49.070748,lng:14.519460,area:4775,fence:338,cat:"II.", last_maintenance: '2025-05-22', is_maintained: false},
-  {id: 'vdj_rudolfov_iii', name:"VDJ Rudolfov III",district:"CB",lat:48.986207,lng:14.547076,area:1868,fence:174,cat:"I.", last_maintenance: '2025-07-18', is_maintained: false},
-  {id: 'vdj_rimov_vesce', name:"VDJ Rimov - Vesce",district:"CB",lat:48.847847,lng:14.466957,area:662,fence:99,cat:"I.", last_maintenance: '2025-06-08', is_maintained: false},
-  {id: 'vdj_hosin', name:"VDJ Hosin",district:"CB",lat:49.033641,lng:14.492878,area:809,fence:125,cat:"II.", last_maintenance: '2025-05-05', is_maintained: false},
-  {id: 'vdj_vcelna', name:"VDJ Včelná",district:"CB",lat:48.924663,lng:14.463506,area:8660,fence:476,cat:"II.", last_maintenance: '2025-07-20', is_maintained: false},
-  {id: 'vdj_hury', name:"VDJ Húry",district:"CB",lat:49.006417,lng:14.549815,area:395,fence:0,cat:"I.", last_maintenance: '2025-06-15', is_maintained: false},
-  {id: 'vdj_chlumec', name:"VDJ Chlumec",district:"CB",lat:49.124766,lng:14.431321,area:811,fence:110,cat:"II.", last_maintenance: '2025-07-12', is_maintained: false},
-  {id: 'vdj_olesnik', name:"VDJ Olešník",district:"CB",lat:49.111103,lng:14.377766,area:380,fence:117,cat:"I.", last_maintenance: '2025-05-28', is_maintained: false},
-  {id: 'cs_bukovec', name:"ČS Bukovec",district:"CB",lat:48.881608,lng:14.449233,area:4943,fence:300,cat:"I.", last_maintenance: '2025-06-03', is_maintained: false},
-  {id: 'vdj_herman', name:"VDJ Heřman",district:"CB",lat:48.909479,lng:14.499876,area:982,fence:119,cat:"II.", last_maintenance: '2025-07-22', is_maintained: false},
-  {id: 'cs_vidov', name:"ČS Vidov u řeky",district:"CB",lat:48.924157,lng:14.489619,area:2501,fence:212,cat:"II.", last_maintenance: '2025-05-18', is_maintained: false},
-  {id: 'vrt_vidov', name:"Vrt Vidov",district:"CB",lat:48.924066,lng:14.489679,area:470,fence:164,cat:"II.", last_maintenance: '2025-07-25', is_maintained: false},
-  {id: 'uv_plav', name:"ÚV Plav",district:"CB",lat:48.912611,lng:14.494018,area:74777,fence:1413,cat:"I.", last_maintenance: '2025-06-28', is_maintained: false},
-  {id: 'vdj_cekanice', name:"VDJ Čekanice",district:"TA",lat:49.422197,lng:14.689896,area:6344,fence:450,cat:"I.", last_maintenance: '2025-05-09', is_maintained: false},
-  {id: 'vdj_svata_anna', name:"VDJ Svatá Anna",district:"TA",lat:49.401133,lng:14.698640,area:4192,fence:264,cat:"I.", last_maintenance: '2025-07-06', is_maintained: false},
-  {id: 'vdj_bezdecin', name:"VDJ Bezděčín",district:"TA",lat:49.323096,lng:14.628405,area:1996,fence:169,cat:"I.", last_maintenance: '2025-06-22', is_maintained: false},
-  {id: 'vdj_milevsko', name:"VDJ Milevsko",district:"TA",lat:49.452521,lng:14.344102,area:823,fence:129,cat:"I.", last_maintenance: '2025-05-02', is_maintained: false},
-  {id: 'vdj_hodusin', name:"VDJ Hodušín",district:"TA",lat:49.429670,lng:14.474214,area:1708,fence:205,cat:"II.", last_maintenance: '2025-07-09', is_maintained: false},
-  {id: 'vdj_vsechov', name:"VDJ Všechov",district:"TA",lat:49.430159,lng:14.623205,area:1574,fence:199,cat:"I.", last_maintenance: '2025-06-16', is_maintained: false},
-  {id: 'vdj_zlukov', name:"VDJ Zlukov",district:"TA",lat:49.196289,lng:14.736382,area:1520,fence:184,cat:"II.", last_maintenance: '2025-05-12', is_maintained: false},
-  {id: 'uv_tabor', name:"ÚV Tábor",district:"TA",lat:49.422872,lng:14.666426,area:12262,fence:350,cat:"II.", last_maintenance: '2025-07-14', is_maintained: false},
-  {id: 'cs_sudomerice', name:"ČS Sudoměřice",district:"TA",lat:49.286580,lng:14.547794,area:2508,fence:220,cat:"I.", last_maintenance: '2025-06-29', is_maintained: false},
-  {id: 'vdj_provozni_tabor', name:"Provozní Vodojem Tábor",district:"TA",lat:49.424264,lng:14.666384,area:1853,fence:155,cat:"II.", last_maintenance: '2025-05-20', is_maintained: false}
+// === Data ===
+const arealy = [
+  {nazev:"VDJ Amerika II", okres:"PI", kat:"I.", vymera:3303, opl:293, lat:49.305131, lon:14.166126},
+  {nazev:"VDJ Drahonice", okres:"ST", kat:"I.", vymera:5953, opl:376, lat:49.202902, lon:14.063713},
+  {nazev:"VDJ Vodňany", okres:"ST", kat:"I.", vymera:1594, opl:252, lat:49.164550, lon:14.177836},
+  {nazev:"ÚV Plav", okres:"CB", kat:"I.", vymera:74777, opl:1413, lat:48.912611, lon:14.494018},
 ];
 
-let arealData = [];
-let filteredAreas = [];
-let routePoints = JSON.parse(localStorage.getItem('jvs_route_points')) || [];
-let routingControl = null;
-let clusterGroup = L.markerClusterGroup({ disableClusteringAtZoom: 14 });
-let heatLayer = L.heatLayer([], {radius: 40, blur: 25, maxZoom: 13, gradient: {0.0: '#10b981', 0.5: '#f59e0b', 1.0: '#ef4444'}}); // Zelená -> Žlutá -> Červená
-let drawingLayer = new L.FeatureGroup();
-let drawControl;
-let isDrawing = false;
-let map;
+// === Map init ===
+const map = L.map('map', { zoomControl:false }).setView([49.1,14.4], 9);
+L.control.zoom({ position:'bottomright' }).addTo(map);
 
-// === POMOCNÉ FUNKCE ===
+const baseOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+const baseSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+baseOSM.addTo(map);
 
-function showToast(message, type = 'primary') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast p-3 rounded-lg shadow-lg text-white font-semibold mb-2 bg-${type}-600`;
-    toast.textContent = message;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-}
+const baseLayers = { "Mapa": baseOSM, "Satelitní": baseSat };
+L.control.layers(baseLayers).addTo(map);
 
-// Výpočet rizikového skóre (0 - 1)
-function calculateRiskScore(area) {
-    if (area.is_maintained) return 0; // Nulové riziko pro hotové
-    
-    // 1. Dny od poslední údržby
-    const lastMaintenance = new Date(area.last_maintenance);
-    const today = new Date();
-    const diffTime = Math.abs(today - lastMaintenance);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Max rizikový den (např. 180 dní)
-    const maxRiskDays = 180;
-    let timeScore = Math.min(1, diffDays / maxRiskDays);
+// === Cluster & Heatmap ===
+const cluster = L.markerClusterGroup();
+const heatData = [];
 
-    // 2. Kategorie (I. = 1.0, II. = 0.5, Bez/B = 0.2)
-    let catWeight = 0;
-    if (area.cat === 'I.') catWeight = 1.0;
-    else if (area.cat === 'II.') catWeight = 0.5;
-    else catWeight = 0.2; // Bez kategorie (B)
-
-    // Kombinace: čas má větší váhu
-    // Max skóre je 1.0. Tady to uděláme jednoduše: 60% čas, 40% kategorie
-    return (timeScore * 0.6) + (catWeight * 0.4 * (1 - timeScore)); // Omezení vlivu kategorie, pokud je údržba čerstvá
-}
-
-// === FIREBASE A DATA ===
-
-function getFirestorePath(collectionName) {
-    // Používáme public data pro sdílení areálů, ale s prefixem userId pro editaci
-    const userId = window.userId || 'guest';
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    return `artifacts/${appId}/public/data/${userId}_${collectionName}`;
-}
-
-async function syncDataFromFirestore() {
-    if (!window.db || !window.isAuthReady) {
-        // Fallback na LocalStorage
-        arealData = JSON.parse(localStorage.getItem('jvs_areal_data')) || initialAreas;
-        showToast("Načteno z lokálního úložiště (offline)", 'warning');
-        window.applyFilters();
-        return;
-    }
-
-    const colRef = window.collection(window.db, getFirestorePath('areals'));
-    
-    // Nastavíme listener pro real-time aktualizace
-    window.onSnapshot(colRef, (snapshot) => {
-        const firestoreAreas = snapshot.docs.map(doc => ({
-            ...doc.data(),
-            docId: doc.id,
-            // Převedeme Firestore Timestamp na Date string
-            last_maintenance: doc.data().last_maintenance ? doc.data().last_maintenance.toDate().toISOString().substring(0, 10) : '2025-01-01',
-            is_maintained: doc.data().is_maintained || false
-        }));
-
-        if (firestoreAreas.length === 0) {
-            // První spuštění - nahrajeme initialAreas do Firestore
-            uploadInitialData(colRef);
-            return;
-        }
-
-        arealData = firestoreAreas;
-        localStorage.setItem('jvs_areal_data', JSON.stringify(arealData));
-        showToast(`Načteno ${arealData.length} areálů z Firestore.`, 'success');
-        window.applyFilters(); // Přenastaví markery a statistiky
-    }, (error) => {
-        console.error("Chyba při načítání dat z Firestore:", error);
-        showToast("Chyba synchronizace s Firestore. Používám lokální data.", 'danger');
-        arealData = JSON.parse(localStorage.getItem('jvs_areal_data')) || initialAreas;
-        window.applyFilters();
-    });
-}
-
-function uploadInitialData(colRef) {
-    initialAreas.forEach(async (area) => {
-        // Simulace, že 10 areálů je hotových z minulé údržby
-        area.is_maintained = Math.random() < 0.25;
-        try {
-            await window.addDoc(colRef, {
-                ...area,
-                lat: parseFloat(area.lat),
-                lng: parseFloat(area.lng),
-                area: parseFloat(area.area),
-                fence: parseFloat(area.fence),
-                // Převedeme last_maintenance na serverTimestamp nebo Date
-                last_maintenance: new Date(area.last_maintenance) 
-            });
-        } catch (e) {
-            console.error("Chyba při nahrávání prvotních dat:", e);
-        }
-    });
-    showToast("Prvotní data nahrána do Firestore. Počkejte na načtení.", 'warning');
-}
-
-async function saveAreaToFirestore(area, isNew) {
-    if (!window.db || !area.docId) {
-        showToast("Data uložena pouze lokálně (Offline/Host).", 'warning');
-        localStorage.setItem('jvs_areal_data', JSON.stringify(arealData));
-        window.applyFilters();
-        return;
-    }
-
-    const areaRef = window.doc(window.db, getFirestorePath('areals'), area.docId);
-
-    try {
-        const updateData = {
-            name: area.name,
-            district: area.district,
-            cat: area.cat,
-            area: parseFloat(area.area),
-            fence: parseFloat(area.fence),
-            lat: parseFloat(area.lat),
-            lng: parseFloat(area.lng),
-            is_maintained: area.is_maintained || false,
-            // last_maintenance se aktualizuje pouze při "Hotovo"
-        };
-
-        await window.setDoc(areaRef, updateData, { merge: true });
-        showToast(`Areál '${area.name}' úspěšně uložen.`, 'success');
-    } catch (e) {
-        console.error("Chyba při ukládání areálu do Firestore:", e);
-        showToast("Chyba: Změny nebyly synchronizovány s Firestore.", 'danger');
-    }
-}
-
-async function toggleMaintenanceStatus(docId) {
-    if (!window.db || !docId) {
-        showToast("Offline: Status není synchronizován.", 'warning');
-        return;
-    }
-    
-    const area = arealData.find(a => a.docId === docId);
-    if (!area) return;
-
-    const areaRef = window.doc(window.db, getFirestorePath('areals'), docId);
-    const newStatus = !area.is_maintained;
-    
-    try {
-        await window.updateDoc(areaRef, {
-            is_maintained: newStatus,
-            // Nastavíme serverTimestamp jen pokud se dokončuje údržba
-            last_maintenance: newStatus ? window.serverTimestamp() : area.last_maintenance 
-        });
-        showToast(`Stav údržby pro '${area.name}' aktualizován na: ${newStatus ? 'Hotovo ✅' : 'K údržbě 🛠️'}`, 'success');
-    } catch (e) {
-        console.error("Chyba při změně statusu údržby:", e);
-        showToast("Chyba: Nelze aktualizovat status údržby.", 'danger');
-    }
-}
-
-// === MAPA A MARKERY ===
-
-window.initMap = () => {
-    map = L.map('map', {zoomControl: false}).setView([49.2, 14.5], 9);
-    
-    L.control.zoom({position: 'topright'}).addTo(map);
-
-    // Přepínání vrstev
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OSM' });
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' });
-    
-    osm.addTo(map);
-    map.addLayer(clusterGroup);
-    map.addLayer(drawingLayer);
-    
-    const baseLayers = {"Základní (OSM)": osm, "Satelitní (Esri)": satellite};
-    const overlayLayers = {"Riziková Heatmapa": heatLayer, "Areály": clusterGroup};
-    L.control.layers(baseLayers, overlayLayers, { position: 'bottomright' }).addTo(map);
-    
-    // Draw Control pro měření a přidání areálu
-    drawControl = new L.Control.Draw({
-        position: 'topleft',
-        edit: { featureGroup: drawingLayer },
-        draw: {
-            polygon: { shapeOptions: { color: '#3b82f6' }, title: 'Měření plochy' },
-            polyline: { shapeOptions: { color: '#f59e0b' }, title: 'Měření vzdálenosti' },
-            rectangle: false, circle: false, circlemarker: false,
-            marker: { title: 'Přidat areál', icon: L.icon({ iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NmMTQyYSIgZD0iTTEyIDBDNi41IDAgMiA0LjUgMiAxMGMwIDcgNSA5IDAgMTEuNUwxMiAyNGwxMC01LjVDMjIgMjEuNSAxNy41IDE3IDIyIDEwQzIyIDQuNSAxNy41IDAgMTIgMFoiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0IiBmaWxsPSIjRkZGIi8+PC9zdmc+Cg==', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34] }) }
-        }
-    });
-
-    map.on(L.Draw.Event.Created, function (e) {
-        const type = e.layerType;
-        const layer = e.layer;
-        drawingLayer.addLayer(layer);
-
-        if (type === 'marker' && isDrawing) {
-            addNewAreaForm(layer.getLatLng());
-            isDrawing = false;
-        }
-
-        if (type === 'polygon') {
-            const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-            showToast(`Vypočtená plocha: ${(area / 10000).toFixed(2)} ha (${area.toFixed(0)} m²)`, 'primary');
-        }
-        
-        if (type === 'polyline') {
-            const distance = L.GeometryUtil.length(layer.getLatLngs());
-            showToast(`Vypočtená vzdálenost: ${(distance / 1000).toFixed(2)} km (${distance.toFixed(0)} m)`, 'primary');
-        }
-    });
-
-    map.on(L.Draw.Event.DrawStart, function(e) {
-         if (e.layerType === 'marker') { isDrawing = true; }
-    });
-
-    map.on('moveend', window.updateWeather);
-    
-    // Zajištění správné velikosti po initu
-    setTimeout(() => map.invalidateSize(), 100);
-}
-
-window.renderMarkers = async () => {
-  clusterGroup.clearLayers();
-  
-  // Zobrazit pouze areály, které nejsou dokončeny, pokud je toggle zapnutý
-  const onlyRemaining = document.getElementById('maintainedToggle').checked;
-  const dataToRender = filteredAreas.filter(a => !onlyRemaining || !a.is_maintained);
-
-  // Spočítáme Heatmap data a celkové statistiky
-  heatLayer.setLatLngs([]);
-  let remainingArea = 0;
-  let totalArea = 0;
-  let totalFence = 0;
-
-  dataToRender.forEach(a => {
-      const riskScore = calculateRiskScore(a);
-      
-      // Pro Heatmapu - síla bodu je riskScore * 10 (pro lepší vizualizaci)
-      if (riskScore > 0) {
-          heatLayer.addLatLng([a.lat, a.lng, riskScore * 10]); 
-          remainingArea += a.area;
-      }
-      
-      totalArea += a.area;
-      totalFence += a.fence;
-      
-      // Barevné markery
-      let markerColor = a.is_maintained ? '#10b981' : '#f59e0b'; // Zelená (Hotovo), Oranžová (K údržbě)
-      if (riskScore > 0.6) markerColor = '#ef4444'; // Červená (Vysoké riziko)
-
-      const popup = `
-        <div class="popup space-y-2 text-sm">
-          <h3 class="font-bold text-lg text-primary">${a.name}</h3>
-          <p>Okres: ${a.district} | Kategorie: <span class="badge" style="background:${a.cat==='I.'?'#3b82f6':a.cat==='II.'?'#f59e0b':'#64748b'}">${a.cat || 'Bez'}</span></p>
-          <p>Plocha: ${a.area.toLocaleString('cs-CZ')} m² | Oplocení: ${a.fence} bm</p>
-          <p class="text-xs opacity-70">Poslední údržba: ${a.last_maintenance}</p>
-          <div class="flex items-center justify-between pt-2">
-            <button class="bg-primary text-white p-2 rounded text-xs hover:bg-primary/90 transition-colors" onclick="addToRoute('${a.docId}')"><i class="fas fa-route"></i> Trasa</button>
-            <button class="text-sm px-2 py-1 rounded-full ${a.is_maintained ? 'bg-success/50 text-success' : 'bg-danger/50 text-danger'}" onclick="window.toggleMaintenanceStatus('${a.docId}')">
-                <i class="fas ${a.is_maintained ? 'fa-check-circle' : 'fa-tools'}"></i> ${a.is_maintained ? 'Hotovo' : 'K údržbě'}
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2 mt-3">
-            <button class="bg-blue-600 text-white py-1 rounded text-sm hover:bg-blue-500" onclick="window.editArea('${a.docId}')"><i class="fas fa-edit"></i> Upravit</button>
-            <button class="bg-danger text-white py-1 rounded text-sm hover:bg-danger/90" onclick="window.deleteArea('${a.docId}', '${a.name}')"><i class="fas fa-trash"></i> Smazat</button>
-            <a href="https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lng}" target="_blank" class="text-center text-blue-400 text-sm col-span-2 mt-1">Otevřít v Google Maps</a>
-          </div>
-        </div>
-      `;
-
-      const marker = L.circleMarker([a.lat, a.lng], {
-          radius: 8, 
-          color: markerColor, 
-          fillOpacity: 0.9,
-          weight: 1
-      }).bindPopup(popup);
-      
-      marker.areaData = a; // Uložení dat do markeru
-      clusterGroup.addLayer(marker);
-  });
-  
-  // Aktualizace statistik
-  document.getElementById('totalArea').textContent = arealData.reduce((sum, a) => sum + a.area, 0).toLocaleString('cs-CZ');
-  document.getElementById('remainingArea').textContent = arealData.filter(a => !a.is_maintained).reduce((sum, a) => sum + a.area, 0).toLocaleString('cs-CZ');
-  document.getElementById('totalFence').textContent = arealData.reduce((sum, a) => sum + a.fence, 0).toLocaleString('cs-CZ');
-  document.getElementById('objectCount').textContent = dataToRender.length;
-}
-
-window.toggleHeatmap = () => {
-    if (document.getElementById('heatmapToggle').checked) {
-        map.addLayer(heatLayer);
-    } else {
-        map.removeLayer(heatLayer);
-    }
-}
-
-// === ROUTING ===
-window.addToRoute = (docId) => {
-    const area = arealData.find(a => a.docId === docId);
-    if (!area) return;
-    
-    // Zkontrolujeme, jestli už tam není, abychom nezpomalovali
-    if (!routePoints.some(p => p.docId === docId)) {
-        routePoints.push(area);
-        localStorage.setItem('jvs_route_points', JSON.stringify(routePoints));
-        showToast(`Přidáno: ${area.name} do trasy.`, 'primary');
-    }
-    
-    updateRoute();
-}
-
-window.updateRoute = () => {
-    if (routingControl) map.removeControl(routingControl);
-    
-    const waypoints = routePoints.map(p => L.latLng(p.lat, p.lng));
-    const routeListEl = document.getElementById('routeList');
-    const routeStatusEl = document.getElementById('routeStatus');
-    routeListEl.innerHTML = '';
-
-    if (waypoints.length < 2) {
-        routeStatusEl.textContent = 'Trasa není aktivní. Přidejte alespoň 2 areály.';
-        return;
-    }
-    
-    // Zobrazení bodů trasy v panelu (s drag&drop simulací)
-    routePoints.forEach((p, index) => {
-        const item = document.createElement('div');
-        item.className = 'bg-slate-700 p-2 rounded-lg flex items-center justify-between text-sm';
-        item.innerHTML = `<span>${index + 1}. ${p.name}</span> 
-                          <button onclick="removeFromRoute('${p.docId}')" class="text-danger ml-2"><i class="fas fa-times"></i></button>`;
-        routeListEl.appendChild(item);
-    });
-    
-    // Vytvoření trasy (OSRM)
-    routingControl = L.Routing.control({
-        waypoints: waypoints,
-        routeWhileDragging: true,
-        show: false, // Nechceme, aby se zobrazoval defaultní panel OSRM
-        lineOptions: {styles: [{color: '#3b82f6', weight: 6, opacity: 0.7}]},
-        router: L.Routing.osrmv1({
-            serviceUrl: 'https://router.project-osrm.org/route/v1' // Veřejný OSRM
-        }),
-        // Optimalizace je zapnutá (autoRoute: true je default)
-        autoRoute: true 
-    }).on('routesfound', function(e) {
-        const route = e.routes[0];
-        const distanceKm = (route.summary.totalDistance / 1000).toFixed(1);
-        const timeHours = (route.summary.totalTime / 3600).toFixed(1);
-        
-        routeStatusEl.innerHTML = `<i class="fas fa-check-circle text-success"></i> Trasa nalezena! 
-                                   <br>Vzdálenost: **${distanceKm} km** <br>Čas (jízda): **${timeHours} hodiny**`;
-        
-        // Aktualizace routePoints pro uložení optimalizovaného pořadí
-        routePoints = route.waypoints.map(wp => {
-            const original = routePoints.find(a => a.lat === wp.latLng.lat && a.lng === wp.latLng.lng);
-            return original || { lat: wp.latLng.lat, lng: wp.latLng.lng, name: wp.name };
-        });
-        localStorage.setItem('jvs_route_points', JSON.stringify(routePoints));
-        
-    }).on('routingerror', function() {
-        routeStatusEl.textContent = 'Chyba při výpočtu trasy. Zkuste to znovu.';
-    }).addTo(map);
-}
-
-window.removeFromRoute = (docId) => {
-    routePoints = routePoints.filter(p => p.docId !== docId);
-    localStorage.setItem('jvs_route_points', JSON.stringify(routePoints));
-    showToast('Areál odstraněn z trasy.', 'warning');
-    updateRoute();
-}
-
-window.resetRoute = () => {
-    routePoints = [];
-    localStorage.removeItem('jvs_route_points');
-    if (routingControl) map.removeControl(routingControl);
-    document.getElementById('routeStatus').textContent = 'Trasa není aktivní. Přidejte alespoň 2 areály.';
-    showToast('Trasa byla resetována.', 'warning');
-    updateRoute();
-}
-
-
-// === EDIT/DELETE/ADD (Modaly) ===
-window.addNewAreaInit = () => {
-    // Přidáme drawControl, pokud ještě není, a aktivujeme režim markeru
-    if (!map.hasControl(drawControl)) {
-        map.addControl(drawControl);
-    }
-    drawControl.setDrawingOptions({
-        marker: {
-            title: 'Nový areál',
-            repeatMode: false
-        }
-    });
-
-    // Simulace kliknutí na tlačítko markeru v Draw Control
-    const markerButton = document.querySelector('.leaflet-draw-draw-marker');
-    if (markerButton) {
-        markerButton.click();
-        showToast("Klikněte na mapu pro umístění nového areálu.", 'primary');
-    }
-}
-
-window.addNewAreaForm = (latLng) => {
-    // Skryjeme Draw Control po umístění
-    if (map.hasControl(drawControl)) map.removeControl(drawControl);
-    
-    document.getElementById('modalTitle').textContent = 'Přidat nový areál';
-    
-    // Vyprázdnění formuláře
-    document.getElementById('areaForm').reset();
-    document.getElementById('areaIndex').value = ''; 
-    document.getElementById('areaLat').value = latLng.lat;
-    document.getElementById('areaLng').value = latLng.lng;
-
-    document.getElementById('modal').classList.remove('hidden');
-}
-
-window.editArea = (docId) => {
-    const area = arealData.find(a => a.docId === docId);
-    if (!area) return;
-
-    document.getElementById('modalTitle').textContent = `Upravit: ${area.name}`;
-    
-    document.getElementById('areaIndex').value = docId;
-    document.getElementById('areaName').value = area.name;
-    document.getElementById('areaDistrict').value = area.district;
-    document.getElementById('areaCategory').value = area.cat || '';
-    document.getElementById('areaArea').value = area.area;
-    document.getElementById('areaFence').value = area.fence;
-    document.getElementById('areaLat').value = area.lat;
-    document.getElementById('areaLng').value = area.lng; // Lze přidat i drag pro změnu polohy
-    
-    document.getElementById('modal').classList.remove('hidden');
-}
-
-window.deleteArea = (docId, name) => {
-    // Použijeme modal/custom dialog namísto confirm()
-    const doDelete = confirm(`Opravdu chcete smazat areál '${name}'? Tato akce je nevratná.`);
-    
-    if (doDelete) {
-        const index = arealData.findIndex(a => a.docId === docId);
-        if (index > -1) {
-            arealData.splice(index, 1);
-            window.deleteAreaFromFirestore(docId, name);
-        }
-    }
-}
-
-window.deleteAreaFromFirestore = async (docId, name) => {
-    if (!window.db || !docId) {
-        showToast("Smazáno pouze lokálně. Offline mód.", 'warning');
-        localStorage.setItem('jvs_areal_data', JSON.stringify(arealData));
-        window.applyFilters();
-        return;
-    }
-    
-    const areaRef = window.doc(window.db, getFirestorePath('areals'), docId);
-    try {
-        await window.deleteDoc(areaRef);
-        showToast(`Areál '${name}' smazán.`, 'danger');
-    } catch (e) {
-        console.error("Chyba při mazání areálu:", e);
-        showToast("Chyba: Areál nebyl smazán z Firestore.", 'danger');
-    }
-}
-
-window.hideModal = () => {
-    document.getElementById('modal').classList.add('hidden');
-}
-
-document.getElementById('areaForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    window.hideModal();
-    
-    const docId = document.getElementById('areaIndex').value;
-    const name = document.getElementById('areaName').value;
-    const district = document.getElementById('areaDistrict').value;
-    const cat = document.getElementById('areaCategory').value.toUpperCase();
-    const area = parseFloat(document.getElementById('areaArea').value);
-    const fence = parseFloat(document.getElementById('areaFence').value);
-    const lat = parseFloat(document.getElementById('areaLat').value);
-    const lng = parseFloat(document.getElementById('areaLng').value);
-
-    const isNew = !docId;
-    let newArea = { name, district, cat, area, fence, lat, lng, is_maintained: false, last_maintenance: new Date().toISOString().substring(0, 10) };
-
-    if (isNew) {
-        // Nový areál - přidáme do Firestore/lokálně
-        if (window.db) {
-            const colRef = window.collection(window.db, getFirestorePath('areals'));
-            const docRef = await window.addDoc(colRef, { ...newArea, last_maintenance: new Date(newArea.last_maintenance) });
-            newArea.docId = docRef.id;
-        } else {
-            newArea.docId = crypto.randomUUID(); // Generujeme ID lokálně
-            arealData.push(newArea);
-        }
-    } else {
-        // Editace existujícího areálu
-        const index = arealData.findIndex(a => a.docId === docId);
-        if (index > -1) {
-            const existingArea = arealData[index];
-            existingArea.name = name;
-            existingArea.district = district;
-            existingArea.cat = cat;
-            existingArea.area = area;
-            existingArea.fence = fence;
-            existingArea.lat = lat;
-            existingArea.lng = lng;
-            newArea = existingArea;
-        }
-    }
-
-    await saveAreaToFirestore(newArea, isNew);
+// === Marker generation ===
+arealy.forEach(a=>{
+  const color = a.kat==='I.'?'#ef4444':a.kat==='II.'?'#f97316':'#64748b';
+  const icon = L.divIcon({html:`<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid white"></div>`});
+  const m = L.marker([a.lat,a.lon],{icon});
+  const html = `
+    <b>${a.nazev}</b><br>
+    Okres: ${a.okres}<br>
+    Kat: ${a.kat||'---'}<br>
+    Výměra: ${a.vymera.toLocaleString()} m²<br>
+    <a href="https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}" target="_blank">Mapa</a>`;
+  m.bindPopup(html);
+  cluster.addLayer(m);
+  heatData.push([a.lat,a.lon,0.6]);
 });
+map.addLayer(cluster);
+L.heatLayer(heatData,{radius:25,blur:15,gradient:{0.4:'#2563eb',0.65:'#22d3ee',1:'#facc15'}}).addTo(map);
 
+// === Drawing Tools ===
+const drawn = new L.FeatureGroup(); map.addLayer(drawn);
+const drawControl = new L.Control.Draw({
+  edit: { featureGroup: drawn },
+  draw: { polygon:false, circle:false, marker:false, circlemarker:false }
+});
+map.addControl(drawControl);
+map.on(L.Draw.Event.CREATED, e => drawn.addLayer(e.layer));
 
-// === FILTRY A STATISTIKY ===
-window.applyFilters = () => {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const district = document.getElementById('districtFilter').value;
-  const onlyRemaining = document.getElementById('maintainedToggle').checked;
-
-  filteredAreas = arealData.filter(a => 
-    a.name.toLowerCase().includes(search) &&
-    (!district || a.district === district)
-  );
-
-  window.renderMarkers();
+// === Stats ===
+function updateStats() {
+  const totalArea = arealy.reduce((s,a)=>s+a.vymera,0);
+  document.getElementById('qsCount').textContent = arealy.length;
+  document.getElementById('qsArea').textContent = (totalArea/1000).toFixed(1)+'k m²';
 }
+updateStats();
 
-window.resetFilters = () => {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('districtFilter').value = '';
-    document.getElementById('maintainedToggle').checked = false;
-    window.applyFilters();
+// === Resize fix for iOS ===
+window.addEventListener('resize',()=>{ setTimeout(()=>map.invalidateSize(),200); });
+
+// === Register Service Worker ===
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
 }
-
-window.resetAllData = () => {
-    const doReset = confirm("Tato akce vymaže veškerá data (areály, trasu) lokálně! Dále se pokusí smazat i data z Firestore. OPRAVDU CHCETE POKRAČOVAT?");
-    if (doReset) {
-        localStorage.clear();
-        showToast("Lokální data vymazána. Pro globální reset restartujte aplikaci.", 'danger');
-        // V reálné aplikaci by zde následovalo mazání dat z Firestore pod uživatelem/appId.
-        window.location.reload(); 
-    }
-}
-
-
-// === WEATHER & AI ===
-
-window.updateWeather = async () => {
-  const center = map.getCenter();
-  const weatherContent = document.getElementById('weatherContent');
-  weatherContent.innerHTML = `<div class="spinner"></div>`;
-  
-  try {
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${center.lat}&longitude=${center.lng}&current=temperature_2m,precipitation,wind_speed_10m,cloud_cover,is_day&hourly=pm10,pm2_5&forecast_days=1`);
-    const d = await r.json();
-    const c = d.current;
-    const h = d.hourly;
-    
-    // Najdeme nejbližší hodinovou hodnotu kvality ovzduší
-    const nowHourIndex = new Date().getHours();
-    const pm10 = h.pm10[nowHourIndex];
-    const pm25 = h.pm2_5[nowHourIndex];
-    
-    weatherContent.innerHTML = `
-      <div class="text-3xl font-bold mb-1">${c.temperature_2m} °C</div>
-      <div class="flex justify-center gap-4 text-sm">
-        <span class="opacity-80"><i class="fas fa-umbrella"></i> ${c.precipitation} mm</span>
-        <span class="opacity-80"><i class="fas fa-wind"></i> ${c.wind_speed_10m} km/h</span>
-        <span class="opacity-80"><i class="fas fa-cloud"></i> ${c.cloud_cover}%</span>
-      </div>
-      <div class="mt-2 text-xs">
-        Kvalita vzduchu (PM): <span class="font-semibold">${pm10} µg/m³ PM10 / ${pm25} µg/m³ PM2.5</span>
-      </div>
-    `;
-  } catch(e) {
-    console.error("Chyba při načítání počasí:", e);
-    weatherContent.textContent = 'Počasí nedostupné';
-  }
-}
-
-window.generateAIReport = async () => {
-    if (routePoints.length < 2) {
-        showToast("Trasa musí obsahovat minimálně 2 areály pro generování AI protokolu.", 'warning');
-        return;
-    }
-
-    const reportBtn = document.querySelector('#panelContent button.bg-purple-600');
-    const originalText = reportBtn.innerHTML;
-    reportBtn.innerHTML = `<i class="fas fa-sync fa-spin"></i> Generuji...`;
-    reportBtn.disabled = true;
-
-    const routeNames = routePoints.map(p => p.name).join(', ');
-    
-    // Získáme detail trasy, pokud routingControl existuje a má spočítanou trasu
-    let routeInfo = "Trasa není k dispozici pro detailní souhrn (offline).";
-    if (routingControl && routingControl.getPlan().getWaypoints().length > 0) {
-         try {
-            const routes = routingControl.getRoutableTile().getRoutes();
-            if (routes.length > 0 && routes[0].summary) {
-                const summary = routes[0].summary;
-                const distanceKm = (summary.totalDistance / 1000).toFixed(1);
-                const timeMinutes = Math.ceil(summary.totalTime / 60);
-                routeInfo = `Celková délka jízdy: ${distanceKm} km, odhadovaný čas jízdy: ${timeMinutes} minut. Areály v pořadí: ${routeNames}.`;
-            }
-         } catch (e) {
-             // OSRM nemusí být vždy dostupné, použijeme fallback
-         }
-    }
-
-    const systemPrompt = "Jsi provozní dispečer JVS. Tvým úkolem je vytvořit krátký, ale profesionální protokol údržby pro technika na základě zadané trasy. Protokol by měl mít nadpis, shrnutí, časový odhad a akční seznam.";
-    const userQuery = `Vytvoř protokol údržby pro technika, který má navštívit areály: ${routeNames}. Přidávám informaci o trase: ${routeInfo}. Vytvoř checklist s 5 hlavními úkoly údržby pro areály (např. sekání trávy, kontrola čerpadel).`;
-    const apiKey = ""; // Canvas runtime poskytne klíč
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-    const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
-        tools: [{ "google_search": {} }], // Pro případ, že bude potřeba info o areálu
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-    };
-
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Chyba generování protokolu.";
-        
-        // Zobrazíme protokol v novém modalu (zde jako alert pro jednoduchost, ale s formátováním)
-        alert("--- Protokol Údržby (AI) ---\n\n" + generatedText);
-
-    } catch (error) {
-        console.error("Chyba volání Gemini API:", error);
-        showToast("Chyba při komunikaci s AI pro generování protokolu.", 'danger');
-    } finally {
-        reportBtn.innerHTML = originalText;
-        reportBtn.disabled = false;
-    }
-}
-
-
-// === PANEL TOGGLE & INIT ===
-window.togglePanel = () => {
-    const panel = document.getElementById('panel');
-    const icon = document.getElementById('panelHandleIcon');
-    const isOpen = panel.style.transform === 'translateY(0px)'; // Kontrola, zda je transformace 0
-    
-    if (isOpen) {
-        panel.style.transform = 'translateY(calc(100% - 70px))';
-        icon.classList.remove('fa-chevron-down');
-        icon.classList.add('fa-chevron-up');
-    } else {
-        panel.style.transform = 'translateY(0px)';
-        icon.classList.remove('fa-chevron-up');
-        icon.classList.add('fa-chevron-down');
-    }
-    
-    // Důležité: Invalidate size po změně velikosti pro Leaflet
-    setTimeout(() => map.invalidateSize(), 350);
-}
-
-// === REGISTRACE EVENT LISTENERS ===
-document.getElementById('searchInput').addEventListener('input', window.applyFilters);
-document.getElementById('districtFilter').addEventListener('change', window.applyFilters);
-document.getElementById('maintainedToggle').addEventListener('change', window.applyFilters);
-document.getElementById('locateBtn').onclick = () => {
-  navigator.geolocation.getCurrentPosition(p => {
-    map.setView([p.coords.latitude, p.coords.longitude], 15);
-    showToast('Vaše poloha nalezena.', 'primary');
-  }, () => showToast('Geolokace selhala: Zkontrolujte oprávnění.', 'danger'));
-};
-
-
-// === GLOBÁLNÍ INICIALIZACE PO AUTHENTIKACI ===
-window.initApp = () => {
-    // 1. Inicializace mapy (pokud ještě nebyla)
-    if (!map) {
-        window.initMap();
-        map.fitBounds(initialAreas.map(a => [a.lat, a.lng]));
-        map.setMinZoom(8);
-        map.setMaxZoom(19);
-    }
-    
-    // 2. Naplnění filtru okresů
-    const districts = [...new Set(initialAreas.map(a => a.district))].sort();
-    const districtSelect = document.getElementById('districtFilter');
-    if (districtSelect.options.length === 1) { // Prevence duplikátů
-        districts.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d;
-            opt.textContent = d;
-            districtSelect.appendChild(opt);
-        });
-    }
-
-    // 3. Synchronizace dat (triggeruje renderMarkers)
-    window.syncDataFromFirestore();
-    
-    // 4. Nastavení trasy (pokud je uložená)
-    window.updateRoute();
-
-    // 5. Oprava velikosti a otevření panelu
-    setTimeout(() => {
-        map.invalidateSize();
-        // Otevřít panel na mobilu při startu (výchozí je zavřený)
-        if (window.innerWidth < 768) {
-            togglePanel();
-        }
-    }, 500);
-    
-    // PWA Service Worker (sw.js separátně)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log('Service Worker registrován'))
-            .catch(error => console.warn('Service Worker selhal:', error));
-    }
-    
-    // Periodické aktualizace počasí
-    setInterval(window.updateWeather, 600000); // 10 min
-};
-
-// Zajištění, že se initApp spustí jen jednou po dokončení Firebase Autentizace
-if (window.isAuthReady) {
-    window.initApp();
-}
-
-// iOS fixy a resize
-window.addEventListener('orientationchange', () => setTimeout(() => map.invalidateSize(), 500));
-window.addEventListener('resize', () => setTimeout(() => map.invalidateSize(), 500));
 </script>
-
 </body>
 </html>
-
