@@ -2,124 +2,109 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>JVS – Vodárenský Management</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JVS Vodárenský Management</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
-html, body { margin:0; padding:0; height:100%; width:100%; font-family:'Inter',sans-serif; background:#0f172a; color:#f8fafc; }
-#map { height:100dvh; width:100vw; z-index:0; }
-button, select, input { font-family:inherit; }
-
-/* ✅ Dark mode styling */
-.leaflet-container { background:#1e293b; }
-.sidebar { background:rgba(30,41,59,0.9); color:white; backdrop-filter:blur(10px); }
-.panel-section { background:#1e293b; border:1px solid #334155; }
-.panel-head { background:#334155; color:#f8fafc; }
-.btn-primary { background:#2563eb; color:white; }
-.btn-secondary { background:#475569; color:white; }
-.legend-floating { background:#1e293b; color:white; border:1px solid #334155; }
-.quick-stats { background:#1e293b; color:white; border:1px solid #334155; }
-
-/* iOS fullscreen fix */
-@supports (-webkit-touch-callout: none) {
-  #map { height:-webkit-fill-available; }
-}
+html, body {margin:0;height:100%;background:#0f172a;color:#f8fafc;}
+#map {height:100dvh;width:100vw;}
+.quick {position:absolute;bottom:20px;right:20px;background:#1e293b;padding:8px 12px;border-radius:8px;}
 </style>
 </head>
 
 <body>
 <div id="map"></div>
-
-<!-- Quick stats -->
-<div class="quick-stats" id="quickStats" style="position:absolute;bottom:20px;right:20px;padding:10px;border-radius:12px;z-index:1000;">
-  <span id="qsCount">41</span> areálů | <span id="qsArea">198.1k m²</span>
-</div>
-
-<!-- Legend -->
-<div class="legend-floating" style="position:absolute;bottom:20px;left:20px;padding:10px;border-radius:8px;z-index:1000;">
-  <div><span style="color:#ef4444;">●</span> Kat. I</div>
-  <div><span style="color:#f97316;">●</span> Kat. II</div>
-  <div><span style="color:#94a3b8;">●</span> Bez kat.</div>
-</div>
+<div class="quick" id="quickStats"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-<script>
-// === Data ===
-const arealy = [
-  {nazev:"VDJ Amerika II", okres:"PI", kat:"I.", vymera:3303, opl:293, lat:49.305131, lon:14.166126},
-  {nazev:"VDJ Drahonice", okres:"ST", kat:"I.", vymera:5953, opl:376, lat:49.202902, lon:14.063713},
-  {nazev:"VDJ Vodňany", okres:"ST", kat:"I.", vymera:1594, opl:252, lat:49.164550, lon:14.177836},
-  {nazev:"ÚV Plav", okres:"CB", kat:"I.", vymera:74777, opl:1413, lat:48.912611, lon:14.494018},
-];
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// === Map init ===
-const map = L.map('map', { zoomControl:false }).setView([49.1,14.4], 9);
-L.control.zoom({ position:'bottomright' }).addTo(map);
+// === Firebase init ===
+const firebaseConfig = {
+  apiKey: "AIzaSyExample",
+  authDomain: "jvs-app.firebaseapp.com",
+  projectId: "jvs-app"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-const baseOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
-const baseSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
-baseOSM.addTo(map);
-
-const baseLayers = { "Mapa": baseOSM, "Satelitní": baseSat };
-L.control.layers(baseLayers).addTo(map);
-
-// === Cluster & Heatmap ===
-const cluster = L.markerClusterGroup();
-const heatData = [];
-
-// === Marker generation ===
-arealy.forEach(a=>{
-  const color = a.kat==='I.'?'#ef4444':a.kat==='II.'?'#f97316':'#64748b';
-  const icon = L.divIcon({html:`<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid white"></div>`});
-  const m = L.marker([a.lat,a.lon],{icon});
-  const html = `
-    <b>${a.nazev}</b><br>
-    Okres: ${a.okres}<br>
-    Kat: ${a.kat||'---'}<br>
-    Výměra: ${a.vymera.toLocaleString()} m²<br>
-    <a href="https://www.google.com/maps/search/?api=1&query=${a.lat},${a.lon}" target="_blank">Mapa</a>`;
-  m.bindPopup(html);
-  cluster.addLayer(m);
-  heatData.push([a.lat,a.lon,0.6]);
-});
-map.addLayer(cluster);
-L.heatLayer(heatData,{radius:25,blur:15,gradient:{0.4:'#2563eb',0.65:'#22d3ee',1:'#facc15'}}).addTo(map);
-
-// === Drawing Tools ===
-const drawn = new L.FeatureGroup(); map.addLayer(drawn);
-const drawControl = new L.Control.Draw({
-  edit: { featureGroup: drawn },
-  draw: { polygon:false, circle:false, marker:false, circlemarker:false }
-});
-map.addControl(drawControl);
-map.on(L.Draw.Event.CREATED, e => drawn.addLayer(e.layer));
-
-// === Stats ===
-function updateStats() {
-  const totalArea = arealy.reduce((s,a)=>s+a.vymera,0);
-  document.getElementById('qsCount').textContent = arealy.length;
-  document.getElementById('qsArea').textContent = (totalArea/1000).toFixed(1)+'k m²';
+// === Load data ===
+let arealy = [];
+async function loadData() {
+  try {
+    const res = await fetch('arealy.json');
+    arealy = await res.json();
+    createMap();
+  } catch(e){ console.error(e); }
 }
-updateStats();
 
-// === Resize fix for iOS ===
-window.addEventListener('resize',()=>{ setTimeout(()=>map.invalidateSize(),200); });
+// === Map setup ===
+function createMap(){
+  const map = L.map('map').setView([49.1,14.4],9);
+  const base = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19});
+  base.addTo(map);
 
-// === Register Service Worker ===
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+  const cluster = L.markerClusterGroup();
+  const heat = [];
+  arealy.forEach(a=>{
+    const marker = L.marker([a.lat,a.lon]);
+    marker.bindPopup(`<b>${a.nazev}</b><br>${a.okres}<br>${a.vymera} m²`);
+    cluster.addLayer(marker);
+    heat.push([a.lat,a.lon,0.6]);
+  });
+  L.heatLayer(heat,{radius:25}).addTo(map);
+  map.addLayer(cluster);
+
+  // === Routing ===
+  const routing = L.Routing.control({
+    router: L.Routing.osrmv1({ serviceUrl:'https://router.project-osrm.org/route/v1' }),
+    waypoints: [],
+    addWaypoints: true
+  }).addTo(map);
+
+  // === Geolocation & sort ===
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const user = [pos.coords.latitude,pos.coords.longitude];
+      const sorted = arealy.map(a=>({...a,dist:distance(user,[a.lat,a.lon])}))
+                           .sort((x,y)=>x.dist-y.dist);
+      document.getElementById('quickStats').innerText =
+        `Nejblíže: ${sorted[0].nazev} (${sorted[0].dist.toFixed(1)} km)`;
+    });
+  }
 }
+
+function distance(a,b){
+  const R=6371;const dLat=(b[0]-a[0])*Math.PI/180;const dLon=(b[1]-a[1])*Math.PI/180;
+  const aa=Math.sin(dLat/2)**2+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
+}
+
+// === Push notifications & geofence ===
+if ('Notification' in window && Notification.permission!=='granted') Notification.requestPermission();
+function notify(msg){ if(Notification.permission==='granted') new Notification(msg); }
+navigator.geolocation.watchPosition(p=>{
+  arealy.forEach(a=>{
+    const d=distance([p.coords.latitude,p.coords.longitude],[a.lat,a.lon]);
+    if(d<0.5 && a.kat==="I.") notify(`Blížíte se k areálu ${a.nazev}`);
+  });
+});
+
+// === SW registration ===
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+loadData();
 </script>
 </body>
 </html>
