@@ -1,0 +1,19 @@
+# Dependency directories
+node_modules/ 
+/dist/ 
+/build/
+
+# IDE and Editor files
+.vscode/ 
+.idea/
+*.iml
+
+# OS generated files
+.DS_Store 
+Thumbs.db
+
+# Log and temporary files
+*.log
+*.tmp
+*~
+#*
