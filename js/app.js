@@ -1,14 +1,11 @@
 import { JVS_AREALS } from './data.js';
 import { initializeMap, renderMarkers, recenterMap, filterAreals } from './map-controller.js';
 import { initializeUI, toggleMenu, updateStats, setupRouteActions, setupFilterActions } from './ui-controller.js';
-import { registerServiceWorker } from './pwa-controller.js'; // Přesuneme logiku PWA do samostatného kontroleru
+import { registerServiceWorker } from './pwa-controller.js'; 
+import { initializeManuAIChat } from './manu-ai-controller.js'; // NOVÝ IMPORT
 
-// --- Utility funkce ---
-
-/**
- * Zobrazí toast notifikaci na obrazovce.
- * @param {string} message - Zpráva k zobrazení.
- */
+// --- Utility funkce (Stejné) ---
+// ... export function showToast(message) { ... }
 export function showToast(message) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -19,11 +16,8 @@ export function showToast(message) {
     }, 3000);
 }
 
-// --- Logika Akordeonu ---
 
-/**
- * Inicializuje akordeon (rozbalování sekcí) v postranním panelu.
- */
+// --- Logika Akordeonu (Stejné) ---
 function setupAccordions() {
     const triggers = document.querySelectorAll('.acc-trigger');
     triggers.forEach(trigger => {
@@ -33,6 +27,7 @@ function setupAccordions() {
             
             // Zavřít všechny ostatní sekce
             document.querySelectorAll('.acc-section').forEach(s => {
+                // Přidáno manu-ai-section pro zavření ostatních
                 if (s.id !== sectionId && s.classList.contains('active')) {
                     s.classList.remove('active');
                 }
@@ -63,32 +58,24 @@ function initApp() {
     // 3. Inicializace UI a ovládacích prvků
     setupAccordions();
     setupRouteActions();
-    setupFilterActions(mapInstance, JVS_AREALS); // Nastavení filterů a navěšení na mapu
+    setupFilterActions(mapInstance, JVS_AREALS); 
     initializeUI(mapInstance, JVS_AREALS);
     
-    // 4. Počáteční vykreslení
+    // ************************************
+    // 4. Inicializace Barbieri e-ManuAI (NOVÝ KROK)
+    initializeManuAIChat();
+    // ************************************
+
+    // 5. Počáteční vykreslení
     renderMarkers(mapInstance, JVS_AREALS);
     updateStats(JVS_AREALS);
 
-    // 5. Navěšení hlavních event listenerů
+    // 6. Navěšení hlavních event listenerů
     document.getElementById('menu-toggle').addEventListener('click', toggleMenu);
     document.getElementById('recenter-map-btn').addEventListener('click', () => recenterMap(mapInstance, JVS_AREALS));
     
-    // Puter.js / Claude AI Asistent
-    document.getElementById('ai-assistant-btn').addEventListener('click', () => {
-        if (typeof Puter !== 'undefined') {
-            Puter.ai({
-                prompt: 'Jsi Claude AI Asistent pro údržbáře JVS. Poskytni rychlou pomoc s plánováním, navigací nebo informacemi o areálech (má být jich 41). Tvůj úkol je pomáhat s prací v terénu.',
-                model: 'claude-4.5-sonnet', 
-                context: `Aktuální areály: ${JVS_AREALS.map(a => a.name).join(', ')}`,
-                title: 'Claude AI - JVS Asistent',
-                placeholder: 'Zeptej se na cokoliv ohledně areálů...',
-                button: 'Zeptej se asistenta'
-            });
-        } else {
-            showToast('❌ AI Asistent není dostupný.');
-        }
-    });
+    // Původní Puter.js / Claude AI Asistent kód ODSTRANĚN.
+    // Dříve zde byl kód pro #ai-assistant-btn, který byl z index.html odstraněn.
 
     console.log('Aplikace JVS Management System byla úspěšně inicializována.');
 }
