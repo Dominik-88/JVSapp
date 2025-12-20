@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JVS Management System</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --primary: #0055ff;
+        --success: #10b981;
+        --text-main: #1e293b;
+        --border: rgba(226, 232, 240, 0.8);
+        --shadow: 0 10px 30px rgba(0,0,0,0.15);
+        --glass: rgba(255, 255, 255, 0.95);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+        font-family: 'Inter', sans-serif; 
+        height: 100vh; 
+        width: 100vw; 
+        overflow: hidden; 
+        background: #f1f5f9; 
+    }
+
+    #map { 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        bottom: 0; 
+        z-index: 1; 
+    }
+
+    .sidebar-anchor {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 450px;
+        z-index: 1000;
+    }
+
+    .glass-panel {
+        background: var(--glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .header-top {
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .brand-compact { 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+    }
+    
+    .logo-circle { 
+        width: 36px; 
+        height: 36px; 
+        background: linear-gradient(135deg, var(--primary) 0%, #0044cc 100%);
+        color: white; 
+        border-radius: 50%; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 16px;
+        box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
+    }
+    
+    .brand-text h1 { 
+        font-size: 16px; 
+        font-weight: 800; 
+        color: var(--text-main); 
+        letter-spacing: -0.5px;
+    }
+    
+    .brand-text p { 
+        font-size: 10px; 
+        color: #64748b; 
+        text-transform: uppercase; 
+        letter-spacing: 0.5px; 
+    }
+
+    .menu-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-main);
+        font-size: 22px;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .menu-toggle:hover {
+        background: rgba(0, 85, 255, 0.1);
+        color: var(--primary);
+    }
+
+    .menu-items {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        border-top: 0 solid transparent;
+    }
+    
+    .sidebar-anchor.expanded .menu-items {
+        max-height: 70vh;
+        border-top: 1px solid var(--border);
+        overflow-y: auto;
+    }
+
+    .acc-section { 
+        border-bottom: 1px solid var(--border); 
+    }
+    
+    .acc-section:last-child { 
+        border-bottom: none; 
+    }
+     
+    .acc-trigger {
+        width: 100%;
+        padding: 16px 20px;
+        background: none;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 600;
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 14px;
+        transition: background 0.2s;
+    }
+
+    .acc-trigger:hover {
+        background: rgba(248, 250, 252, 0.8);
+    }
+    
+    .acc-trigger i.m-icon { 
+        margin-right: 12px; 
+        color: #94a3b8; 
+        width: 18px; 
+    }
+
+    .acc-body { 
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(248, 250, 252, 0.5);
+    }
+    
+    .acc-section.active .acc-body { 
+        max-height: 500px;
+        padding: 15px 20px;
+        overflow-y: auto;
+    }
+    
+    .acc-section.active .chevron { 
+        transform: rotate(180deg); 
+    }
+
+    .map-tools {
+        position: absolute;
+        bottom: 30px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .tool-btn {
+        width: 48px;
+        height: 48px;
+        background: white;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        color: var(--text-main);
+        font-size: 20px;
+        transition: all 0.2s;
+    }
+
+    .tool-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .leaflet-popup-content-wrapper { 
+        border-radius: 20px !important; 
+        padding: 0 !important; 
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2) !important;
+    }
+    
+    .leaflet-popup-content { 
+        margin: 0 !important; 
+        width: 320px !important; 
+    }
+     
+    .p-card { 
+        display: flex; 
+        flex-direction: column; 
+    }
+    
+    .p-head { 
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white; 
+        padding: 18px 20px; 
+    }
+    
+    .p-head h3 { 
+        font-size: 16px; 
+        font-weight: 700; 
+        margin-bottom: 4px;
+    }
+    
+    .p-head span { 
+        font-size: 12px; 
+        opacity: 0.8; 
+    }
+     
+    .p-main { 
+        padding: 16px 20px; 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 12px; 
+        background: white;
+    }
+    
+    .p-stat { 
+        font-size: 11px; 
+        color: #64748b; 
+        font-weight: 700; 
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .p-stat b { 
+        display: block; 
+        font-size: 14px; 
+        color: var(--text-main); 
+        margin-top: 4px; 
+    }
+
+    .p-foot { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 10px; 
+        padding: 16px 20px; 
+        background: #f8fafc; 
+        border-top: 1px solid #e2e8f0; 
+    }
+    
+    .btn { 
+        border: none; 
+        border-radius: 10px; 
+        padding: 11px 14px; 
+        font-size: 12px; 
+        font-weight: 700; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        gap: 6px;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .btn-p { 
+        background: var(--primary); 
+        color: white; 
+    }
+
+    .btn-p:hover {
+        background: #0044cc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 85, 255, 0.3);
+    }
+    
+    .btn-s { 
+        background: white; 
+        border: 1px solid #e2e8f0; 
+        color: var(--text-main); 
+    }
+
+    .btn-s:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #059669;
+    }
+
+    .custom-pin {
+        width: 34px;
+        height: 34px;
+        background: white;
+        border: 3px solid var(--primary);
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0, 85, 255, 0.4);
+        transition: all 0.2s;
+    }
+
+    .custom-pin:hover {
+        transform: rotate(-45deg) scale(1.15);
+        box-shadow: 0 8px 24px rgba(0, 85, 255, 0.5);
+    }
+    
+    .custom-pin i { 
+        transform: rotate(45deg); 
+        color: var(--primary); 
+        font-size: 14px; 
+    }
+
+    #toast {
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 50px;
+        z-index: 5000;
+        font-size: 13px;
+        font-weight: 600;
+        display: none;
+        box-shadow: var(--shadow);
+        animation: slideUp 0.3s;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translate(-50%, 20px);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        outline: none;
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s;
+        margin-bottom: 10px;
+    }
+
+    .form-input:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(0, 85, 255, 0.1);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .stat-box {
+        background: white;
+        padding: 14px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+
+    .stat-box:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0, 85, 255, 0.1);
+    }
+</style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="sidebar-anchor" id="mainPanel">
+        <div class="glass-panel">
+            <div class="header-top">
+                <div class="brand-compact">
+                    <div class="logo-circle">JVS</div>
+                    <div class="brand-text">
+                        <h1>JVS Management System</h1>
+                        <p>Údržba areálů</p>
+                    </div>
+                </div>
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars" id="menuIcon"></i>
+                </button>
+            </div>
+
+            <div class="menu-items">
+                
+                <div class="acc-section" id="filterSection">
+                    <button class="acc-trigger" onclick="toggleAccordion('filterSection')">
+                        <i class="fas fa-filter m-icon"></i> Filtry & Vyhledávání
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <input type="text" id="searchInput" class="form-input" placeholder="Hledat areál...">
+                        <select id="filterOkres" class="form-select">
+                            <option value="all">Všechny okresy</option>
+                            <option value="CB">České Budějovice (CB)</option>
+                            <option value="TA">Tábor (TA)</option>
+                            <option value="CK">Český Krumlov (CK)</option>
+                            <option value="PT">Prachatice (PT)</option>
+                            <option value="PI">Písek (PI)</option>
+                            <option value="ST">Strakonice (ST)</option>
+                        </select>
+                        <select id="filterKategorie" class="form-select">
+                            <option value="all">Všechny kategorie</option>
+                            <option value="I.">Kategorie I.</option>
+                            <option value="II.">Kategorie II.</option>
+                        </select>
+                        <button class="btn btn-p" onclick="aplikujFiltry()">
+                            <i class="fas fa-search"></i> Použít filtry
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="acc-section" id="statsSection">
+                    <button class="acc-trigger" onclick="toggleAccordion('statsSection')">
+                        <i class="fas fa-chart-bar m-icon"></i> Přehled a Statistiky
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <p>Celkem areálů</p>
+                                <b id="statCount">41</b>
+                            </div>
+                            <div class="stat-box">
+                                <p>Celková výměra (m²)</p>
+                                <b id="statArea">...k</b>
+                            </div>
+                        </div>
+                        <p style="margin-top: 15px; font-size: 11px; color: #64748b;">(Údaje se aktualizují dle filtrů)</p>
+                    </div>
+                </div>
+
+                <div class="acc-section" id="routeSection">
+                    <button class="acc-trigger" onclick="toggleAccordion('routeSection')">
+                        <i class="fas fa-route m-icon"></i> Plánovaná trasa <span id="routeBadge" style="background: var(--primary); color: white; border-radius: 8px; padding: 2px 8px; font-size: 10px;">0</span>
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body" id="routeList">
+                        <div class="empty-state">Seznam trasy je prázdný</div>
+                    </div>
+                    <div style="padding: 10px 20px 20px;">
+                        <button class="btn btn-s" style="width: 100%;" onclick="clearRoute()">
+                            <i class="fas fa-trash-alt"></i> Vyčistit trasu
+                        </button>
+                        <a href="#" class="btn btn-success" style="width: 100%; margin-top: 10px;">
+                            <i class="fas fa-share-alt"></i> Exportovat/Sdílet
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="map-tools">
+        <div class="tool-btn" onclick="resetMapView()" title="Vycentrovat mapu">
+            <i class="fas fa-crosshairs"></i>
+        </div>
+        <div class="tool-btn" onclick="zobrazToast('Claude AI je v procesu implementace a bude k dispozici v plné PWA verzi.')" title="Claude AI Asistent">
+            <i class="fas fa-robot"></i>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+    const AREALY = [
+        // Doplněná data (id 1-29) pro zachování 41 areálů
+        { id: 1, nazev: "VDJ Amerika II", okres: "PI", kategorie: "I.", vymera: 3303, oploceni: 293, lat: 49.349601, lon: 14.072231, posledniUdrzba: "10.05.2024" },
+        { id: 2, nazev: "VDJ Drahonice", okres: "ST", kategorie: "I.", vymera: 5953, oploceni: 376, lat: 49.208197, lon: 13.916053, posledniUdrzba: "01.03.2024" },
+        { id: 3, nazev: "VDJ Vodňany", okres: "ST", kategorie: "I.", vymera: 1594, oploceni: 252, lat: 49.167230, lon: 14.187313, posledniUdrzba: "22.06.2024" },
+        { id: 4, nazev: "VDJ Hlavatce", okres: "CB", kategorie: "I.", vymera: 7968, oploceni: 424, lat: 49.006509, lon: 14.542289, posledniUdrzba: "15.01.2024" },
+        { id: 5, nazev: "VDJ Šibeniční vrch 1", okres: "PT", kategorie: "I.", vymera: 1835, oploceni: 245, lat: 49.049870, lon: 14.010190, posledniUdrzba: "20.07.2024" },
+        { id: 6, nazev: "ÚV Husinecka přehrada", okres: "PT", kategorie: "I.", vymera: 4908, oploceni: 703, lat: 49.053805, lon: 14.026725, posledniUdrzba: "11.08.2024" },
+        { id: 7, nazev: "VDJ Zálužany", okres: "PI", kategorie: "II.", vymera: 2350, oploceni: 299, lat: 49.352451, lon: 14.288219, posledniUdrzba: "17.03.2024" },
+        { id: 8, nazev: "VDJ Ptáčník", okres: "PT", kategorie: "II.", vymera: 1070, oploceni: 239, lat: 49.030701, lon: 14.002821, posledniUdrzba: "03.04.2024" },
+        { id: 9, nazev: "VDJ Zdoba", okres: "CB", kategorie: "II.", vymera: 15523, oploceni: 225, lat: 48.973418, lon: 14.503932, posledniUdrzba: "10.06.2024" },
+        { id: 10, nazev: "VDJ Domoradice", okres: "CK", kategorie: "I.", vymera: 4148, oploceni: 450, lat: 48.941913, lon: 14.409321, posledniUdrzba: "28.01.2024" },
+        { id: 11, nazev: "VDJ Netřebice", okres: "CK", kategorie: "I.", vymera: 877, oploceni: 136, lat: 48.868770, lon: 14.430931, posledniUdrzba: "05.05.2024" },
+        { id: 12, nazev: "VDJ Plešivec", okres: "CK", kategorie: "I.", vymera: 975, oploceni: 119, lat: 48.905615, lon: 14.449195, posledniUdrzba: "19.07.2024" },
+        { id: 13, nazev: "VDJ Doudleby", okres: "CB", kategorie: "II.", vymera: 413, oploceni: 79, lat: 48.887640, lon: 14.484250, posledniUdrzba: "14.02.2024" },
+        { id: 14, nazev: "VDJ Jankov", okres: "CB", kategorie: "I.", vymera: 784, oploceni: 106, lat: 48.882110, lon: 14.475190, posledniUdrzba: "21.04.2024" },
+        { id: 15, nazev: "VDJ Hosin II", okres: "CB", kategorie: "I.", vymera: 4173, oploceni: 399, lat: 49.070110, lon: 14.485120, posledniUdrzba: "07.05.2024" },
+        { id: 16, nazev: "VDJ Chlum", okres: "CB", kategorie: "II.", vymera: 535, oploceni: 63, lat: 48.910303, lon: 14.460877, posledniUdrzba: "02.06.2024" },
+        { id: 17, nazev: "VDJ Chotýčany", okres: "CB", kategorie: "II.", vymera: 4775, oploceni: 338, lat: 49.068224, lon: 14.509701, posledniUdrzba: "24.03.2024" },
+        { id: 18, nazev: "VDJ Rudolfov III", okres: "CB", kategorie: "I.", vymera: 1868, oploceni: 174, lat: 48.995960, lon: 14.503610, posledniUdrzba: "30.07.2024" },
+        { id: 19, nazev: "VDJ Rímov - Vesce", okres: "CB", kategorie: "I.", vymera: 662, oploceni: 99, lat: 48.869018, lon: 14.498459, posledniUdrzba: "18.08.2024" },
+        { id: 20, nazev: "VDJ Hosin", okres: "CB", kategorie: "II.", vymera: 809, oploceni: 125, lat: 49.072233, lon: 14.476481, posledniUdrzba: "05.09.2024" },
+        { id: 21, nazev: "VDJ Včelná", okres: "CB", kategorie: "II.", vymera: 8660, oploceni: 476, lat: 48.950111, lon: 14.488349, posledniUdrzba: "12.01.2024" },
+        { id: 22, nazev: "VDJ Hůry", okres: "CB", kategorie: "I.", vymera: 395, oploceni: 0, lat: 48.995982, lon: 14.453006, posledniUdrzba: "29.05.2024" },
+        { id: 23, nazev: "VDJ Chlumec", okres: "CB", kategorie: "II.", vymera: 811, oploceni: 110, lat: 49.052601, lon: 14.536979, posledniUdrzba: "08.03.2024" },
+        { id: 24, nazev: "VDJ Olešník", okres: "CB", kategorie: "I.", vymera: 3878, oploceni: 117, lat: 49.071871, lon: 14.338782, posledniUdrzba: "19.04.2024" },
+        { id: 25, nazev: "ČS Bukovec", okres: "CB", kategorie: "I.", vymera: 1500, oploceni: 250, lat: 48.988015, lon: 14.532398, posledniUdrzba: "01.07.2024" },
+        { id: 26, nazev: "VDJ Heřmaň", okres: "CB", kategorie: "II.", vymera: 1200, oploceni: 150, lat: 49.032115, lon: 14.288219, posledniUdrzba: "26.02.2024" },
+        { id: 27, nazev: "VDJ Nové Hrady", okres: "CB", kategorie: "I.", vymera: 3206, oploceni: 340, lat: 48.777083, lon: 14.773333, posledniUdrzba: "16.03.2024" },
+        { id: 28, nazev: "ČS Vidov u Lhotky", okres: "CB", kategorie: "II.", vymera: 3100, oploceni: 300, lat: 48.920013, lon: 14.488672, posledniUdrzba: "05.02.2024" },
+        { id: 29, nazev: "VDJ Stropnice", okres: "CB", kategorie: "II.", vymera: 2501, oploceni: 212, lat: 48.924213, lon: 14.489672, posledniUdrzba: "05.02.2024" },
+        // Data z části 3/3
+        { id: 30, nazev: "Vrt Vidov", okres: "CB", kategorie: "II.", vymera: 470, oploceni: 164, lat: 48.924066, lon: 14.489679, posledniUdrzba: "12.07.2024" },
+        { id: 31, nazev: "ÚV Plav", okres: "CB", kategorie: "I.", vymera: 74777, oploceni: 1413, lat: 48.911614, lon: 14.493741, posledniUdrzba: "30.03.2024" },
+        { id: 32, nazev: "VDJ Čekanice", okres: "TA", kategorie: "I.", vymera: 6344, oploceni: 450, lat: 49.422197, lon: 14.689896, posledniUdrzba: "18.05.2024" },
+        { id: 33, nazev: "VDJ Svatá Anna", okres: "TA", kategorie: "I.", vymera: 4192, oploceni: 264, lat: 49.401133, lon: 14.698640, posledniUdrzba: "25.06.2024" },
+        { id: 34, nazev: "VDJ Bezděčín", okres: "TA", kategorie: "I.", vymera: 1996, oploceni: 169, lat: 49.322876, lon: 14.628459, posledniUdrzba: "15.04.2024" },
+        { id: 35, nazev: "VDJ Milevsko", okres: "TA", kategorie: "I.", vymera: 823, oploceni: 129, lat: 49.452521, lon: 14.344102, posledniUdrzba: "20.02.2024" },
+        { id: 36, nazev: "VDJ Hodušín", okres: "TA", kategorie: "II.", vymera: 1708, oploceni: 205, lat: 49.429670, lon: 14.474214, posledniUdrzba: "08.07.2024" },
+        { id: 37, nazev: "VDJ Všechov", okres: "TA", kategorie: "I.", vymera: 1574, oploceni: 199, lat: 49.430159, lon: 14.623205, posledniUdrzba: "12.03.2024" },
+        { id: 38, nazev: "VDJ Zlukov", okres: "TA", kategorie: "II.", vymera: 1520, oploceni: 184, lat: 49.196289, lon: 14.736382, posledniUdrzba: "25.01.2024" },
+        { id: 39, nazev: "ÚV Tábor", okres: "TA", kategorie: "II.", vymera: 12262, oploceni: 350, lat: 49.422872, lon: 14.666426, posledniUdrzba: "30.05.2024" },
+        { id: 40, nazev: "ČS Sudoměřice", okres: "TA", kategorie: "I.", vymera: 2508, oploceni: 220, lat: 49.286580, lon: 14.547794, posledniUdrzba: "15.06.2024" },
+        { id: 41, nazev: "Provozní Vodojem Tábor", okres: "TA", kategorie: "II.", vymera: 1853, oploceni: 155, lat: 49.424264, lon: 14.666384, posledniUdrzba: "28.04.2024" }
+    ];
+ 
+    let mapa, markery = [], aktualniTrasa = [], filtrovanaData = AREALY;
+ 
+    function initializujMapu() {
+        mapa = L.map('map', { zoomControl: false }).setView([49.15, 14.35], 9);
+         
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© JVS',
+            maxZoom: 19
+        }).addTo(mapa);
+ 
+        vykresliMarkery(AREALY);
+        nastavEventListenery();
+    }
+
+    function vykresliMarkery(data) {
+        markery.forEach(m => mapa.removeLayer(m));
+        markery = [];
+
+        data.forEach(areal => {
+            const ikona = L.divIcon({
+                className: 'custom-icon-div',
+                html: '<div class="custom-pin"><i class="fas fa-droplet"></i></div>',
+                iconSize: [34, 34],
+                iconAnchor: [17, 34],
+                popupAnchor: [0, -34]
+            });
+ 
+            const marker = L.marker([areal.lat, areal.lon], { icon: ikona }).addTo(mapa);
+             
+            const popupObsah = `
+                <div class="p-card">
+                    <div class="p-head">
+                        <h3>${areal.nazev}</h3>
+                        <span>Okres ${areal.okres} • ${areal.kategorie || 'Bez kategorie'}</span>
+                    </div>
+                    <div class="p-main">
+                        <div class="p-stat">Plocha<b>${areal.vymera.toLocaleString('cs-CZ')} m²</b></div>
+                        <div class="p-stat">Oplocení<b>${areal.oploceni} bm</b></div>
+                        <div class="p-stat">Poslední údržba<b>${areal.posledniUdrzba}</b></div>
+                        <div class="p-stat">ID<b>#${areal.id}</b></div>
+                    </div>
+                    <div class="p-foot">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=$${areal.lat},${areal.lon}" 
+                           target="_blank" 
+                           class="btn btn-p">
+                            <i class="fas fa-location-arrow"></i> Navigovat
+                        </a>
+                        <button class="btn btn-success" onclick="pridatDoTrasy(${areal.id})">
+                            <i class="fas fa-plus"></i> Do trasy
+                        </button>
+                        <button class="btn btn-s" onclick="zobrazInfo(${areal.id})">
+                            <i class="fas fa-info-circle"></i> Informace
+                        </button>
+                        <button class="btn btn-s" onclick="oznacitHotovo(${areal.id})">
+                            <i class="fas fa-check"></i> Hotovo
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            marker.bindPopup(popupObsah, {
+                maxWidth: 320,
+                className: 'custom-popup'
+            });
+            
+            markery.push(marker);
+        });
+
+        aktualizujStatistiky(data);
+    }
+
+    function nastavEventListenery() {
+        document.getElementById('menuToggle').addEventListener('click', toggleMenu);
+        document.getElementById('searchInput').addEventListener('input', debounce(aplikujFiltry, 300));
+        document.getElementById('filterOkres').addEventListener('change', aplikujFiltry);
+        document.getElementById('filterKategorie').addEventListener('change', aplikujFiltry);
+    }
+
+    function aplikujFiltry() {
+        const hledani = document.getElementById('searchInput').value.toLowerCase();
+        const okres = document.getElementById('filterOkres').value;
+        const kategorie = document.getElementById('filterKategorie').value;
+
+        filtrovanaData = AREALY.filter(areal => {
+            const shodaHledani = !hledani || areal.nazev.toLowerCase().includes(hledani);
+            const shodaOkres = okres === 'all' || areal.okres === okres;
+            const shodaKategorie = kategorie === 'all' || areal.kategorie === kategorie;
+            return shodaHledani && shodaOkres && shodaKategorie;
+        });
+
+        vykresliMarkery(filtrovanaData);
+        zobrazToast(`Zobrazeno ${filtrovanaData.length} areálů`);
+    }
+
+    function aktualizujStatistiky(data) {
+        const celkovaVymera = data.reduce((sum, a) => sum + a.vymera, 0);
+        document.getElementById('statCount').textContent = data.length;
+        document.getElementById('statArea').textContent = (celkovaVymera / 1000).toFixed(1) + 'k';
+    }
+
+    function toggleMenu() {
+        const panel = document.getElementById('mainPanel');
+        const ikona = document.getElementById('menuIcon');
+        panel.classList.toggle('expanded');
+        ikona.classList.toggle('fa-bars');
+        ikona.classList.toggle('fa-times');
+    }
+ 
+    function toggleAccordion(id) {
+        const sekce = document.getElementById(id);
+        const bylAktivni = sekce.classList.contains('active');
+        // Zavře všechny sekce, aby byla otevřená vždy jen jedna (nebo žádná)
+        document.querySelectorAll('.acc-section').forEach(s => s.classList.remove('active'));
+        if (!bylAktivni) sekce.classList.add('active');
+    }
+ 
+    function zobrazToast(text) {
+        const toast = document.getElementById('toast');
+        toast.textContent = text;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+    }
+ 
+    function pridatDoTrasy(id) {
+        const areal = AREALY.find(a => a.id === id);
+        if (!areal) return;
+
+        if (aktualniTrasa.some(a => a.id === id)) {
+            zobrazToast('Areál již je v trase');
+            return;
+        }
+
+        aktualniTrasa.push(areal);
+        aktualizujSeznamTrasy();
+        zobrazToast(`Přidáno: ${areal.nazev}`);
+    }
+
+    function aktualizujSeznamTrasy() {
+        const seznam = document.getElementById('routeList');
+        const badge = document.getElementById('routeBadge');
+        
+        badge.textContent = aktualniTrasa.length;
+
+        if (aktualniTrasa.length === 0) {
+            seznam.innerHTML = '<div class="empty-state">Seznam trasy je prázdný</div>';
+        } else {
+            seznam.innerHTML = aktualniTrasa.map(a => 
+                `<div class="route-item">
+                    <i class="fas fa-check-circle"></i>
+                    <span>${a.nazev}</span>
+                </div>`
+            ).join('');
+        }
+    }
+
+    function clearRoute() {
+        aktualniTrasa = [];
+        aktualizujSeznamTrasy();
+        zobrazToast('Trasa smazána');
+    }
+
+    function resetMapView() {
+        mapa.setView([49.15, 14.35], 9);
+        zobrazToast('Mapa vycentrována');
+    }
+
+    function zobrazInfo(id) {
+        const areal = AREALY.find(a => a.id === id);
+        if (!areal) return;
+        zobrazToast(`Info: ${areal.nazev} - ${areal.vymera} m²`);
+    }
+
+    function oznacitHotovo(id) {
+        const areal = AREALY.find(a => a.id === id);
+        if (!areal) return;
+        zobrazToast(`✓ ${areal.nazev} označen jako hotový`);
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), wait);
+        };
+    }
+ 
+    window.onload = initializujMapu;
+</script>
+
+</body>
+</html>
