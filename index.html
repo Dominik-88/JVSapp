@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    ... (Stejné) ...
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="sidebar-anchor" id="main-panel">
+        <div class="glass-panel">
+            <div class="header-top">
+                <div class="brand-compact">
+                    <div class="logo-circle">JVS</div>
+                    <div class="brand-text">
+                        <h1>JVS Management System</h1>
+                        <p>Údržba areálů</p>
+                    </div>
+                </div>
+                <button class="menu-toggle" id="menu-toggle">
+                    <i class="fas fa-bars" id="menu-icon"></i>
+                </button>
+            </div>
+
+            <div class="menu-items">
+                
+                <div class="acc-section" id="filter-section">
+                    <button class="acc-trigger" data-accordion="filter-section">
+                        <i class="fas fa-filter m-icon"></i> Filtry & Vyhledávání
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <input type="text" id="search-input" class="form-input" placeholder="Hledat areál...">
+                        <select id="filter-okres" class="form-select">
+                            <option value="all">Všechny okresy</option>
+                            <option value="CB">České Budějovice (CB)</option>
+                            <option value="TA">Tábor (TA)</option>
+                            <option value="CK">Český Krumlov (CK)</option>
+                            <option value="PT">Prachatice (PT)</option>
+                            <option value="PI">Písek (PI)</option>
+                            <option value="ST">Strakonice (ST)</option>
+                        </select>
+                        <select id="filter-kategorie" class="form-select">
+                            <option value="all">Všechny kategorie</option>
+                            <option value="I.">Kategorie I.</option>
+                            <option value="II.">Kategorie II.</option>
+                        </select>
+                        <button class="btn btn-p" id="apply-filters-btn">
+                            <i class="fas fa-search"></i> Použít filtry
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="acc-section" id="stats-section">
+                    <button class="acc-trigger" data-accordion="stats-section">
+                        <i class="fas fa-chart-bar m-icon"></i> Přehled a Statistiky
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <p>Celkem areálů</p>
+                                <b id="stat-count">0</b>
+                            </div>
+                            <div class="stat-box">
+                                <p>Celková výměra (m²)</p>
+                                <b id="stat-area">0k</b>
+                            </div>
+                        </div>
+                        <p class="stats-footer-note">(Údaje se aktualizují dle filtrů)</p>
+                    </div>
+                </div>
+
+                <div class="acc-section" id="route-section">
+                    <button class="acc-trigger" data-accordion="route-section">
+                        <i class="fas fa-route m-icon"></i> Plánovaná trasa <span id="route-badge" class="badge">0</span>
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <div id="route-list">
+                            </div>
+                    </div>
+                    <div class="route-actions">
+                        <button class="btn btn-s" id="clear-route-btn">
+                            <i class="fas fa-trash-alt"></i> Vyčistit trasu
+                        </button>
+                        <a href="#" class="btn btn-success" id="export-route-btn">
+                            <i class="fas fa-share-alt"></i> Exportovat/Sdílet
+                        </a>
+                    </div>
+                </div>
+
+                <div class="acc-section" id="manu-ai-section">
+                    <button class="acc-trigger" data-accordion="manu-ai-section">
+                        <i class="fas fa-robot m-icon"></i> Barbieri e-ManuAI
+                        <i class="fas fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="acc-body">
+                        <div id="barbieri-chat-container">
+                            <p class="stats-footer-note">Manuál pro XROT 95 EVO. Zeptejte se na klíčové pojmy (např. 'olej', 'chyba', 'rtk').</p>
+                            <div class="chat-wrapper">
+                                <div id="chat-body" class="chat-body">
+                                    </div>
+                                <div class="chat-input-wrapper">
+                                    <input type="text" id="chat-input" class="form-input" placeholder="Zeptejte se na údržbu XROT...">
+                                    <button id="chat-send-btn" class="btn btn-p btn-sm">Odeslat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="map-tools">
+        <div class="tool-btn" id="recenter-map-btn" title="Vycentrovat mapu">
+            <i class="fas fa-crosshairs"></i>
+        </div>
+        </div>
+
+    <div id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
