@@ -56,10 +56,9 @@ async function fetchArealData() {
         }
         allArealsCache = await response.json();
         
-        // KRITICKÁ ZMĚNA: ID se nyní generuje z názvu a indexu, ne z 'cislo_popisne'.
+        // ID se generuje z názvu a indexu, aby nebylo závislé na cislo_popisne
         allArealsCache = allArealsCache.map((areal, index) => ({
             ...areal,
-            // Vytvoříme unikátní, URL-přátelský ID
             id: areal.jmeno.replace(/\s/g, '_').toLowerCase() + '_' + index
         }));
 
@@ -174,26 +173,20 @@ function setupListeners(mapInstance, allAreals) {
 // --- INICIALIZACE A SPUŠTĚNÍ ---
 
 async function init() {
-    // KRITICKÁ OPRAVA: Načteme data. Promise.all by neměl selhat, protože fetch funkce obsluhují chyby.
     await Promise.all([
         fetchArealData(),
         fetchManualData() 
     ]);
     
-    // Data areálů získáme z globální proměnné po jejich naplnění
     const allAreals = allArealsCache;
-
-    // Inicializujeme UI a mapu bez ohledu na to, zda data areálů selhala
     const mapInstance = initializeMap(allAreals);
 
-    // Callback pro ui-controller.js: Vynutí překreslení mapy
     const updateMapMarkers = () => {
         applyFilters(mapInstance, allAreals);
     };
     initUI(updateMapMarkers); 
 
     if (allAreals.length === 0) {
-        // Zobrazíme upozornění, ale UI a mapa je funkční
         showToast('Mapa byla inicializována, ale chybí data areálů.', 'error');
         return; 
     }
