@@ -635,3 +635,81 @@ body {
     border: 1px solid #ea580c; 
     padding: 12px 20px;
 }
+/* ========================================================= */
+/* --- KRITICKÁ OPRAVA SIDEBARU PRO MOBILNÍ UX (iOS/PWA) --- */
+/* ========================================================= */
+
+.sidebar-anchor {
+    /* Zajištění plné výšky a fixní pozice na mobilu */
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 85%; /* Na mobilu pokrývá většinu šířky */
+    max-width: 350px; /* Limit pro větší obrazovky */
+    height: 100vh; 
+    z-index: 1000;
+    
+    /* Výchozí stav: Skryto mimo obrazovku doleva */
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out; 
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    overflow-y: auto; /* Povolit posun obsahu */
+}
+
+/* Kde třída .collapsed ZNAMENÁ, že je panel OTEVŘENÝ */
+.sidebar-anchor.collapsed {
+    /* Stav po kliknutí na menu-toggle: Zobrazeno */
+    transform: translateX(0); 
+}
+
+/* Oprava kontejneru pro vnitřní obsah */
+.sidebar-anchor .glass-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Zajištění, že se akordeonové sekce neztratí */
+.menu-items {
+    flex-grow: 1; 
+    overflow-y: auto; 
+    padding-bottom: 20px; 
+}
+
+/* Vizuální korekce otevřeného akordeonu */
+.acc-section.active .acc-body {
+    max-height: 500px; 
+    padding: 10px 15px;
+}
+
+/* ========================================================= */
+/* --- AKORDEON OPRAVA (Výchozí stav ZAVŘENO) --- */
+/* ========================================================= */
+
+.acc-section .acc-body {
+    /* Zajistí, že je obsah akordeonu na začátku skrytý */
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0 15px;
+}
+
+.acc-section.active .acc-body {
+    /* Přepsání pro aktivní stav */
+    max-height: 500px; /* Dostatečná výška */
+    padding: 10px 15px;
+}
+
+/* --- MAPA A NÁSTROJE --- */
+
+/* Vylepšení mapového tlačítka (menu-toggle) pro viditelnost */
+.menu-toggle {
+    z-index: 1001; 
+    position: fixed; 
+    top: 15px;
+    left: 15px;
+}
+
+.map-tools {
+    z-index: 999; /* Musí být pod sidebar-anchor (1000) */
+}
