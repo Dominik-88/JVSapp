@@ -1,12 +1,12 @@
 // js/map-controller.js
 
 import { showToast, showOfflineWarning } from './app.js';
-import { addArealToRoute, routeList } from './ui-controller.js'; // NOVINKA: Importujeme routeList
+import { addArealToRoute, routeList } from './ui-controller.js'; 
 
 // --- GLOBÁLNÍ STAV ---
 let map = null;
 let markers = [];
-let geojsonLayer = null;
+let markerClusterGroup = null;
 
 // --- LEAFLET IKONY ---
 const defaultIcon = L.icon({
@@ -32,8 +32,6 @@ const routeIcon = L.icon({
 
 /**
  * Inicializuje mapu Leaflet a nastaví základní vrstvy.
- * @param {Array<Object>} areals - Data areálů.
- * @returns {L.Map} Instance mapy.
  */
 export function initializeMap(areals) {
     if (map) {
@@ -60,17 +58,16 @@ export function initializeMap(areals) {
 
 /**
  * Vykreslí markery pro areály na mapě.
- * @param {L.Map} mapInstance
- * @param {Array<Object>} areals
  */
 export function renderMarkers(mapInstance, areals) {
-    // Odebrat staré markery a vyčistit pole
-    if (markers.length > 0) {
-        markers.forEach(m => m.remove());
+    // Odebrat staré markery
+    if (markerClusterGroup) {
+        mapInstance.removeLayer(markerClusterGroup);
+        markerClusterGroup = null;
         markers = [];
     }
 
-    const markerClusterGroup = L.markerClusterGroup({
+    markerClusterGroup = L.markerClusterGroup({
         chunkedLoading: true,
         maxClusterRadius: 40
     });
@@ -79,12 +76,11 @@ export function renderMarkers(mapInstance, areals) {
     const routeIds = new Set(routeList.map(a => a.id));
 
     areals.forEach(areal => {
-        // NOVÁ LOGIKA: Určení ikony
+        // Logika: Určení ikony
         const iconToUse = routeIds.has(areal.id) ? routeIcon : defaultIcon;
         
         const marker = L.marker([areal.gps_rtk.lat, areal.gps_rtk.lng], { icon: iconToUse });
 
-        // Zavolání vlastního detailního panelu při kliknutí
         marker.on('click', function(e) {
             displayArealDetail(areal);
         });
@@ -98,13 +94,11 @@ export function renderMarkers(mapInstance, areals) {
 
 /**
  * Zobrazí detailní panel areálu po kliknutí na marker.
- * @param {Object} areal - Data areálu.
  */
 export function displayArealDetail(areal) {
     const detailPanel = document.getElementById('areal-detail-panel');
     const isArealOnRoute = routeList.some(a => a.id === areal.id);
     
-    // Přizpůsobení tlačítka: zobrazení 'Odebrat z trasy', pokud areál již v trase je
     const routeButtonHTML = isArealOnRoute 
         ? `<button class="btn btn-warning" id="add-to-route-btn" disabled><i class="fas fa-check"></i> Již v trase</button>`
         : `<button class="btn btn-p" id="add-to-route-btn"><i class="fas fa-route"></i> Přidat do trasy</button>`;
@@ -130,7 +124,7 @@ export function displayArealDetail(areal) {
         <h4>Akce</h4>
         <div class="action-buttons">
             ${routeButtonHTML}
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
+            <a href="https://maps.google.com/?q=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
                 <i class="fas fa-location-arrow"></i> Navigovat (Mapy)
             </a>
         </div>
@@ -140,19 +134,10 @@ export function displayArealDetail(areal) {
 
     detailPanel.classList.add('visible');
 
-    // Posluchač pro přidání do trasy (pouze pokud není v trase)
+    // Posluchač pro přidání do trasy
     if (!isArealOnRoute) {
         document.getElementById('add-to-route-btn').addEventListener('click', () => {
             addArealToRoute(areal);
-            // Důležité: Po přidání areálu musíme okamžitě aktualizovat markery na mapě
-            // aby se změnil na červenou ikonu.
-            // Znovu zavoláme applyFilters, abychom vynutili renderMarkers.
-            const searchInput = document.getElementById('search-input').value;
-            const filterOkres = document.getElementById('filter-okres').value;
-            const filterKategorie = document.getElementById('filter-kategorie').value;
-            // Předáme aktuální areály a filtry k překreslení
-            filterAreals(map, markers.map(m => m.options.arealData), { search: searchInput, okres: filterOkres, kategorie: filterKategorie });
-            
             // Znovu zobrazíme detail, aby se aktualizoval stav tlačítka
             displayArealDetail(areal); 
         });
@@ -168,10 +153,6 @@ export function displayArealDetail(areal) {
 
 /**
  * Filtruje areály a překreslí markery.
- * @param {L.Map} mapInstance
- * @param {Array<Object>} allAreals
- * @param {Object} filters
- * @returns {Array<Object>} Filtrovaný seznam areálů.
  */
 export function filterAreals(mapInstance, allAreals, filters) {
     const filtered = allAreals.filter(areal => {
@@ -188,8 +169,6 @@ export function filterAreals(mapInstance, allAreals, filters) {
 
 /**
  * Vycentruje mapu na všechny areály nebo na aktuální polohu.
- * @param {L.Map} mapInstance
- * @param {Array<Object>} areals
  */
 export function recenterMap(mapInstance, areals) {
     if (areals && areals.length > 0) {
