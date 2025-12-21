@@ -37,13 +37,13 @@ const clearRouteBtn = document.getElementById('clear-route-btn');
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.getElementById('main-panel');
 const menuIcon = document.getElementById('menu-icon');
-const aiToggleBtn = document.getElementById('ai-toggle-btn'); // NOVÝ PRVEK
-const aiChatPanel = document.getElementById('ai-chat-panel'); // NOVÝ PRVEK
-const closeAiChatBtn = document.getElementById('close-ai-chat-btn'); // NOVÝ PRVEK
-
-
+const aiToggleBtn = document.getElementById('ai-toggle-btn'); 
+const aiChatPanel = document.getElementById('ai-chat-panel'); 
+const closeAiChatBtn = document.getElementById('close-ai-chat-btn'); 
 const statCountElement = document.getElementById('stat-count');
 const statAreaElement = document.getElementById('stat-area');
+const exportRouteBtn = document.getElementById('export-route-btn');
+
 
 // --- FUNKCE PRO STATISTIKY ---
 
@@ -72,29 +72,38 @@ export function updateStats(areals) {
 /** Aktualizuje odznáček trasy. */
 function updateRouteBadge() {
     routeBadge.textContent = routeList.length;
+    // Povolí/zakáže tlačítko Export
+    if (exportRouteBtn) {
+        exportRouteBtn.classList.toggle('disabled', routeList.length === 0);
+        exportRouteBtn.onclick = routeList.length > 0 ? handleExportRoute : null;
+    }
 }
 
 /** Renderuje seznam trasy v UI. */
 function renderRouteList() {
-    routeListElement.innerHTML = routeList.map(areal => `
-        <div class="route-item" data-id="${areal.id}">
-            <b>${areal.jmeno}</b>
-            <small>${areal.okres} / ${areal.kategorie}</small>
-            <button class="btn btn-icon btn-remove" data-id="${areal.id}">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `).join('');
+    if (routeListElement) {
+        routeListElement.innerHTML = routeList.map(areal => `
+            <div class="route-item" data-id="${areal.id}">
+                <div>
+                    <b>${areal.jmeno}</b>
+                    <small>${areal.okres} / ${areal.kategorie}</small>
+                </div>
+                <button class="btn btn-icon btn-remove" data-id="${areal.id}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+        
+        // Přidání posluchačů pro odstranění z trasy
+        document.querySelectorAll('.route-item .btn-remove').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const idToRemove = e.currentTarget.dataset.id;
+                removeArealFromRoute(idToRemove);
+            });
+        });
+    }
     
     updateRouteBadge();
-    
-    // Přidání posluchačů pro odstranění z trasy
-    document.querySelectorAll('.route-item .btn-remove').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const idToRemove = e.currentTarget.dataset.id;
-            removeArealFromRoute(idToRemove);
-        });
-    });
 }
 
 /** Přidá areál do seznamu trasy. */
@@ -131,6 +140,37 @@ export function clearRoute() {
     mapUpdateCallback(); // Aktualizujeme mapu
 }
 
+/** Vytvoří Google Maps URL pro trasu. */
+function handleExportRoute(e) {
+    if (routeList.length === 0) {
+        e.preventDefault();
+        showToast('Trasa je prázdná, nelze exportovat.', 'warning');
+        return;
+    }
+    
+    // Formát pro Google Maps: /dir/Areal1+Areal2+...+ArealN
+    // Jako cíl nastavíme poslední areál, zbytek jsou body na trase
+    const origin = routeList[0].jmeno;
+    const destination = routeList[routeList.length - 1].jmeno;
+    
+    const waypoints = routeList.slice(1, -1) 
+        .map(areal => areal.jmeno) 
+        .join('/to/');
+    
+    let url = `https://www.google.com/maps/dir/${origin}`;
+    if (waypoints.length > 0) {
+        url += `/to/${waypoints}`;
+    }
+    url += `/to/${destination}`;
+
+    // Aby to fungovalo přes mobilní aplikaci a ne pouze v prohlížeči, použijeme zjednodušený formát dotazu
+    const simpleWaypoints = routeList.map(a => `${a.gps_rtk.lat},${a.gps_rtk.lng}`).join('/');
+    url = `https://www.google.com/maps/dir/${simpleWaypoints}`;
+
+    exportRouteBtn.href = url;
+    showToast('Otevření trasy v Mapách Google...', 'success');
+}
+
 // --- FUNKCE PRO MANUÁL A AI ---
 
 export function getChatInput() { return document.getElementById('chat-input'); }
@@ -141,11 +181,13 @@ export function getChatSendBtn() { return document.getElementById('chat-send-btn
  */
 export function addChatMessage(text, sender) {
     const chatBody = document.getElementById('chat-body');
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `msg ${sender}`;
-    msgDiv.textContent = text;
-    chatBody.appendChild(msgDiv);
-    chatBody.scrollTop = chatBody.scrollHeight; // Scroll dolů
+    if (chatBody) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${sender}`;
+        msgDiv.textContent = text;
+        chatBody.appendChild(msgDiv);
+        chatBody.scrollTop = chatBody.scrollHeight; // Scroll dolů
+    }
 }
 
 // --- INICIALIZACE ---
@@ -160,16 +202,19 @@ export function initUI(onRouteChanged) {
     renderRouteList(); 
     
     // 2. Posluchače pro tlačítka trasy
-    clearRouteBtn.addEventListener('click', clearRoute);
+    if (clearRouteBtn) clearRouteBtn.addEventListener('click', clearRoute);
+    if (exportRouteBtn) exportRouteBtn.addEventListener('click', handleExportRoute);
 
     // 3. Posluchač pro menu toggle (Sidebar)
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
-        menuIcon.classList.toggle('fa-bars');
-        menuIcon.classList.toggle('fa-times');
-    });
+    if (menuToggle && sidebar && menuIcon) {
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            menuIcon.classList.toggle('fa-bars');
+            menuIcon.classList.toggle('fa-times');
+        });
+    }
 
-    // 4. Posluchač pro akordeony
+    // 4. Posluchač pro akordeony (filtry, statistiky, trasa)
     document.querySelectorAll('.acc-trigger').forEach(trigger => {
         trigger.addEventListener('click', (e) => {
             const section = e.currentTarget.closest('.acc-section');
@@ -178,12 +223,21 @@ export function initUI(onRouteChanged) {
         });
     });
 
-    // 5. Posluchače pro plovoucí AI chat (NOVÉ)
-    aiToggleBtn.addEventListener('click', () => {
-        aiChatPanel.classList.toggle('visible');
-    });
+    // 5. Posluchače pro plovoucí AI chat 
+    if (aiToggleBtn) {
+        aiToggleBtn.addEventListener('click', () => {
+            aiChatPanel.classList.toggle('visible');
+            if (aiChatPanel.classList.contains('visible')) {
+                // Posuneme scroll úplně dolů při otevření
+                const chatBody = document.getElementById('chat-body');
+                chatBody.scrollTop = chatBody.scrollHeight; 
+            }
+        });
+    }
 
-    closeAiChatBtn.addEventListener('click', () => {
-        aiChatPanel.classList.remove('visible');
-    });
+    if (closeAiChatBtn) {
+        closeAiChatBtn.addEventListener('click', () => {
+            aiChatPanel.classList.remove('visible');
+        });
+    }
 }
