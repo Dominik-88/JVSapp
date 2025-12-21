@@ -68,6 +68,8 @@ export function renderMarkers(mapInstance, areals) {
         markers = [];
     }
 
+    // Leaflet Marker Cluster je nutný, tak přidáme odkaz na něj do HTML!
+    // V HTML je: <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     markerClusterGroup = L.markerClusterGroup({
         chunkedLoading: true,
         maxClusterRadius: 40
@@ -125,7 +127,7 @@ export function displayArealDetail(areal) {
         <h4>Akce</h4>
         <div class="action-buttons">
             ${routeButtonHTML}
-            <a href="https://maps.google.com/?q=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
+            <a href="http://googleusercontent.com/maps.google.com/?q=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
                 <i class="fas fa-location-arrow"></i> Navigovat (Mapy)
             </a>
         </div>
