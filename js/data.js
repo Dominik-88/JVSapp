@@ -1,378 +1,225 @@
-/**
- * Data areálů JVS.
- * Zdroj: JVS OPRAVA METRŮ.pdf, Kopie Kopie JVS OPRAVA METRŮ.pdf
- * * POZOR: GPS souřadnice jsou POUZE PLACEHOLDER pro vizualizaci.
- * Musí být nahrazeny přesnými daty z Google Sheets / RTK měření.
- */
-export const JVS_AREALS = [
-    {
-        id: 'pi-amerika-ii',
-        name: 'VDJ Amerika II',
-        okres: 'PI',
-        kategorie: 'I.',
-        oploceni_bm: 293,
-        vymra_m2: 3303,
-        gps: [49.026710, 13.994001] // Placeholder Center
-    },
-    {
-        id: 'st-drahonice',
-        name: 'VDJ Drahonice',
-        okres: 'ST',
-        kategorie: 'I.',
-        oploceni_bm: 376,
-        vymra_m2: 5953,
-        gps: [49.030000, 14.010000] // Placeholder
-    },
-    {
-        id: 'st-vodnany',
-        name: 'VDJ Vodňany',
-        okres: 'ST',
-        kategorie: 'I.',
-        oploceni_bm: 252,
-        vymra_m2: 1594,
-        gps: [49.032000, 14.025000] // Placeholder
-    },
-    {
-        id: 'cb-hlavatce',
-        name: 'VDJ Hlavatce',
-        okres: 'CB',
-        [span_1](start_span)kategorie: null, // Bez kategorie v tabulce[span_1](end_span)
-        oploceni_bm: 424,
-        vymra_m2: 7968,
-        gps: [49.035000, 14.040000] // Placeholder
-    },
-    {
-        id: 'pt-sibenicni-vrch-1',
-        name: 'VDJ Šibeniční vrch 1',
-        okres: 'PT',
-        kategorie: 'I.',
-        oploceni_bm: 245,
-        vymra_m2: 1835,
-        gps: [49.038000, 14.055000] // Placeholder
-    },
-    {
-        id: 'pt-uv-husinecka-prehrada',
-        name: 'ÚV Husinecka přehrada',
-        okres: 'PT',
-        kategorie: 'I.',
-        oploceni_bm: 703,
-        vymra_m2: 4908,
-        gps: [49.041000, 14.070000] // Placeholder
-    },
-    {
-        id: 'pt-sibenicni-vrch-ii',
-        name: 'VDJ Šibeniční vrch II',
-        okres: 'PT',
-        kategorie: 'I.',
-        oploceni_bm: 340,
-        vymra_m2: 3206,
-        [span_2](start_span)// Zde jsou použity skutečné koordináty z Kopie[span_2](end_span)
-        gps: [49.026710, 13.994001] 
-    },
-    {
-        id: 'pi-zaluzany',
-        name: 'VDJ Zálužany',
-        okres: 'PI',
-        [span_3](start_span)kategorie: null, // Bez kategorie v tabulce[span_3](end_span)
-        oploceni_bm: 299,
-        vymra_m2: 2350,
-        gps: [49.047000, 14.100000] // Placeholder
-    },
-    {
-        id: 'pt-ptacnik',
-        name: 'VDJ Ptáčník',
-        okres: 'PT',
-        kategorie: 'II.',
-        oploceni_bm: 239,
-        vymra_m2: 1070,
-        gps: [49.050000, 14.115000] // Placeholder
-    },
-    {
-        id: 'cb-zdoba',
-        name: 'VDJ Zdoba',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 225,
-        vymra_m2: 15523,
-        gps: [49.053000, 14.130000] // Placeholder
-    },
-    {
-        id: 'ck-domoradice',
-        name: 'VDJ Domoradice',
-        okres: 'CK',
-        kategorie: 'I.',
-        oploceni_bm: 450,
-        vymra_m2: 4148,
-        gps: [49.056000, 14.145000] // Placeholder
-    },
-    {
-        id: 'ck-horni-brana',
-        name: 'VDJ Horní Brána',
-        okres: 'CK',
-        kategorie: 'I.',
-        oploceni_bm: 187,
-        vymra_m2: 1665,
-        gps: [49.059000, 14.160000] // Placeholder
-    },
-    {
-        id: 'ck-netrebice',
-        name: 'VDJ Netřebice',
-        okres: 'CK',
-        kategorie: 'I.',
-        oploceni_bm: 136,
-        vymra_m2: 877,
-        gps: [49.062000, 14.175000] // Placeholder
-    },
-    {
-        id: 'ck-plesivec',
-        name: 'VDJ Plešivec',
-        okres: 'CK',
-        kategorie: 'I.',
-        oploceni_bm: 119,
-        vymra_m2: 975,
-        gps: [49.065000, 14.190000] // Placeholder
-    },
-    {
-        id: 'cb-doudleby',
-        name: 'VDJ Doudleby',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 79,
-        vymra_m2: 413,
-        gps: [49.068000, 14.205000] // Placeholder
-    },
-    {
-        id: 'cb-jankov',
-        name: 'VDJ Jankov',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 106,
-        vymra_m2: 784,
-        gps: [49.071000, 14.220000] // Placeholder
-    },
-    {
-        id: 'cb-hosin-ii',
-        name: 'VDJ Hosin II',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 399,
-        vymra_m2: 4173,
-        gps: [49.074000, 14.235000] // Placeholder
-    },
-    {
-        id: 'cb-chlum',
-        name: 'VDJ Chlum',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 63,
-        vymra_m2: 535,
-        gps: [49.077000, 14.250000] // Placeholder
-    },
-    {
-        id: 'cb-chotycany',
-        name: 'VDJ Chotýčany',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 338,
-        vymra_m2: 4775,
-        gps: [49.080000, 14.265000] // Placeholder
-    },
-    {
-        id: 'cb-rudolfov-iii',
-        name: 'VDJ Rudolfov III',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 174,
-        vymra_m2: 1868,
-        gps: [49.083000, 14.280000] // Placeholder
-    },
-    {
-        id: 'cb-rimov-vesce',
-        name: 'VDJ Rimov - Vesce',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 99,
-        vymra_m2: 662,
-        gps: [49.086000, 14.295000] // Placeholder
-    },
-    {
-        id: 'cb-hosin',
-        name: 'VDJ Hosin',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 125,
-        vymra_m2: 809,
-        gps: [49.089000, 14.310000] // Placeholder
-    },
-    {
-        id: 'cb-vcelna',
-        name: 'VDJ Včelná',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 476,
-        vymra_m2: 8660,
-        gps: [49.092000, 14.325000] // Placeholder
-    },
-    {
-        id: 'cb-hury',
-        name: 'VDJ Húry',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 0,
-        vymra_m2: 395,
-        gps: [49.095000, 14.340000] // Placeholder
-    },
-    {
-        id: 'cb-chlumec',
-        name: 'VDJ Chlumec',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 110,
-        vymra_m2: 811,
-        gps: [49.098000, 14.355000] // Placeholder
-    },
-    {
-        id: 'cb-olesnik',
-        name: 'VDJ Olešník',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 117,
-        vymra_m2: 380,
-        gps: [49.101000, 14.370000] // Placeholder
-    },
-    {
-        id: 'cb-cs-bukovec',
-        name: 'ČS Bukovec',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 300,
-        vymra_m2: 4943,
-        gps: [49.104000, 14.385000] // Placeholder
-    },
-    {
-        id: 'cb-herman',
-        name: 'VDJ Heřman',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 119,
-        vymra_m2: 982,
-        gps: [49.107000, 14.400000] // Placeholder
-    },
-    {
-        id: 'cb-cs-vidov-u-reky',
-        name: 'ČS Vidov u řeky',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 212,
-        vymra_m2: 2501,
-        gps: [49.110000, 14.415000] // Placeholder
-    },
-    {
-        id: 'cb-vrt-vidov',
-        name: 'Vrt Vidov',
-        okres: 'CB',
-        kategorie: 'II.',
-        oploceni_bm: 164,
-        vymra_m2: 470,
-        gps: [49.113000, 14.430000] // Placeholder
-    },
-    {
-        id: 'cb-uv-plav',
-        name: 'ÚV Plav',
-        okres: 'CB',
-        kategorie: 'I.',
-        oploceni_bm: 1413,
-        vymra_m2: 74777,
-        gps: [49.116000, 14.445000] // Placeholder
-    },
-    {
-        id: 'ta-cekanice',
-        name: 'VDJ Čekanice',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 450,
-        vymra_m2: 6344,
-        gps: [49.119000, 14.460000] // Placeholder
-    },
-    {
-        id: 'ta-svata-anna',
-        name: 'VDJ Svatá Anna',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 264,
-        vymra_m2: 4192,
-        gps: [49.122000, 14.475000] // Placeholder
-    },
-    {
-        id: 'ta-bezdecin',
-        name: 'VDJ Bezděčín',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 169,
-        vymra_m2: 1996,
-        gps: [49.125000, 14.490000] // Placeholder
-    },
-    {
-        id: 'ta-milevsko',
-        name: 'VDJ Milevsko',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 129,
-        vymra_m2: 823,
-        gps: [49.128000, 14.505000] // Placeholder
-    },
-    {
-        id: 'ta-hodusin',
-        name: 'VDJ Hodušín',
-        okres: 'TA',
-        kategorie: 'II.',
-        oploceni_bm: 205,
-        vymra_m2: 1708,
-        gps: [49.131000, 14.520000] // Placeholder
-    },
-    {
-        id: 'ta-vsechov',
-        name: 'VDJ Všechov',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 199,
-        vymra_m2: 1574,
-        gps: [49.134000, 14.535000] // Placeholder
-    },
-    {
-        id: 'ta-zlukov',
-        name: 'VDJ Zlukov',
-        okres: 'TA',
-        kategorie: 'II.',
-        oploceni_bm: 184,
-        vymra_m2: 1520,
-        gps: [49.137000, 14.550000] // Placeholder
-    },
-    {
-        id: 'ta-uv-tabor',
-        name: 'ÚV Tábor',
-        okres: 'TA',
-        kategorie: 'II.',
-        oploceni_bm: 350,
-        vymra_m2: 12262,
-        gps: [49.140000, 14.565000] // Placeholder
-    },
-    {
-        id: 'ta-cs-sudomerice',
-        name: 'ČS Sudoměřice',
-        okres: 'TA',
-        kategorie: 'I.',
-        oploceni_bm: 220,
-        vymra_m2: 2508,
-        gps: [49.143000, 14.580000] // Placeholder
-    },
-    {
-        id: 'ta-provozni-vodojem-tabor',
-        name: 'Provozní Vodojem Tábor',
-        okres: 'TA',
-        kategorie: 'II.',
-        oploceni_bm: 155,
-        vymra_m2: 1853,
-        gps: [49.146000, 14.595000] // Placeholder
+// js/app.js (Hlavní spouštěcí modul)
+
+import { initializeMap, renderMarkers, filterAreals, recenterMap } from './map-controller.js';
+import { initUI, updateStats, getChatInput, getChatSendBtn, addChatMessage } from './ui-controller.js';
+
+// --- GLOBÁLNÍ KONFIGURACE A PROMĚNNÉ ---
+const AREAL_API_URL = 'data/arealy.json'; // Zdroj dat areálů
+const MANUAL_API_URL = 'data/manual.json'; // Zdroj dat manuálu
+let allArealsCache = []; 
+let manualDataCache = []; 
+
+// --- DOM ELEMENTY (Připojení k prvkům z index.html) ---
+const searchInput = document.getElementById('search-input');
+const filterOkres = document.getElementById('filter-okres');
+const filterKategorie = document.getElementById('filter-kategorie');
+const applyFiltersBtn = document.getElementById('apply-filters-btn');
+const recenterMapBtn = document.getElementById('recenter-map-btn');
+const toastElement = document.getElementById('toast');
+
+
+// --- UTILITY ---
+
+/** Zobrazí dočasné upozornění (Toast). */
+export function showToast(message, type = 'success') {
+    if (toastElement.classList.contains('permanent-warning')) {
+        toastElement.classList.remove('permanent-warning');
+        toastElement.textContent = '';
     }
-];
+
+    toastElement.textContent = message;
+    toastElement.className = `show ${type}`;
+    
+    setTimeout(() => {
+        if (!toastElement.classList.contains('permanent-warning')) {
+            toastElement.className = toastElement.className.replace('show', '');
+        }
+    }, 3000);
+}
+
+/** Zobrazí trvalé varování o offline mapě. */
+export function showOfflineWarning() {
+    const toast = document.getElementById('toast');
+    toast.textContent = '🗺️ Offline režim. Nové mapové dlaždice nejsou dostupné.';
+    toast.className = 'show permanent-warning';
+}
+
+
+// --- DATOVÁ LOGIKA ---
+
+/** Načte data areálů. Vrací prázdné pole v případě chyby. */
+async function fetchArealData() {
+    try {
+        const response = await fetch(AREAL_API_URL);
+        if (!response.ok) {
+            throw new Error(`Chyba načítání dat areálů: ${response.statusText}`);
+        }
+        allArealsCache = await response.json();
+        
+        // Přidání unikátního ID pro práci s trasou
+        allArealsCache = allArealsCache.map((areal, index) => ({
+            ...areal,
+            id: areal.cislo_popisne + '_' + areal.gps_rtk.lat.toFixed(4)
+        }));
+
+        showToast('Data areálů úspěšně načtena.');
+        return allArealsCache;
+    } catch (error) {
+        console.error("Kritická chyba při načítání areálů:", error);
+        showToast('Kritická chyba načítání areálů. Pracujete v offline režimu bez nových dat.', 'error');
+        allArealsCache = [];
+        return [];
+    }
+}
+
+/** Načte data manuálu pro AI. Interně ošetřuje chyby, aby neshodil Promise.all. */
+async function fetchManualData() {
+    try {
+        const response = await fetch(MANUAL_API_URL);
+        if (!response.ok) {
+            throw new Error(`Chyba načítání manuálu: ${response.statusText}`);
+        }
+        manualDataCache = await response.json();
+        showToast('Manuál pro XROT 95 EVO načten.', 'info');
+    } catch (error) {
+        console.error("Chyba při načítání manuálu:", error);
+        manualDataCache = []; // Nastavíme prázdné pole
+    }
+}
+
+
+/**
+ * Aplikuje filtry na seznam areálů a aktualizuje mapu a statistiky.
+ */
+function applyFilters(mapInstance, allAreals) {
+    const filters = {
+        search: searchInput.value.trim(),
+        okres: filterOkres.value,
+        kategorie: filterKategorie.value
+    };
+
+    const filteredAreals = filterAreals(mapInstance, allAreals, filters);
+    updateStats(filteredAreals); 
+    
+    return filteredAreals;
+}
+
+
+// --- LOGIKA CHATBOTA (ManuAI) ---
+
+/**
+ * Simulační funkce pro odpověď Barbieri e-ManuAI, která prohledává manualDataCache.
+ */
+function handleAiQuery(userQuery) {
+    addChatMessage(userQuery, 'user');
+    const inputField = getChatInput();
+    inputField.value = '';
+
+    const queryLower = userQuery.toLowerCase().trim();
+    let botResponse = "Omlouvám se, na Váš dotaz nemám v manuálu XROT 95 EVO přímou odpověď. Zkuste hledat klíčová slova jako 'olej', 'chyba' nebo 'rtk'.";
+    
+    // Prohledání dat z manuálu na základě tagů
+    const foundEntry = manualDataCache.find(entry => {
+        return entry.tags.some(tag => queryLower.includes(tag));
+    });
+
+    if (foundEntry) {
+        botResponse = `[${foundEntry.keyword.toUpperCase()}]: ${foundEntry.response} (Sekce: ${foundEntry.detail_link})`;
+    } else if (queryLower.includes('trasa') || queryLower.includes('areál') || queryLower.includes('mapa')) {
+        botResponse = "Jsem určen primárně pro manuál k sekačce XROT. Pro práci s trasami a areály použijte prosím mapu a filtry v hlavním menu.";
+    }
+
+    // Simulace zátěže
+    setTimeout(() => {
+        addChatMessage(botResponse, 'bot');
+    }, 800);
+}
+
+// --- POSLUCHAČE UDÁLOSTÍ ---
+
+/** Nastaví všechny event listenery. */
+function setupListeners(mapInstance, allAreals) {
+    
+    // 1. Tlačítko pro aplikování filtrů
+    applyFiltersBtn.addEventListener('click', () => {
+        applyFilters(mapInstance, allAreals);
+    });
+    
+    // 2. Tlačítko pro vycentrování mapy
+    recenterMapBtn.addEventListener('click', () => {
+        recenterMap(mapInstance, applyFilters(mapInstance, allAreals));
+    });
+
+    // 3. ManuAI Chatbot
+    const chatInput = getChatInput();
+    const chatSendBtn = getChatSendBtn();
+
+    // Odeslání kliknutím a Enterem
+    const sendQuery = () => {
+        const query = chatInput.value.trim();
+        if (query.length > 0) {
+            handleAiQuery(query);
+        }
+    };
+    
+    chatSendBtn.addEventListener('click', sendQuery);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendQuery();
+        }
+    });
+}
+
+// --- INICIALIZACE A SPUŠTĚNÍ ---
+
+async function init() {
+    // KRITICKÁ OPRAVA: Načteme data. Promise.all by neměl selhat, protože fetch funkce obsluhují chyby.
+    await Promise.all([
+        fetchArealData(),
+        fetchManualData() 
+    ]);
+    
+    // Data areálů získáme z globální proměnné po jejich naplnění
+    const allAreals = allArealsCache;
+
+    // Inicializujeme UI a mapu bez ohledu na to, zda data areálů selhala
+    const mapInstance = initializeMap(allAreals);
+
+    // Callback pro ui-controller.js: Vynutí překreslení mapy
+    const updateMapMarkers = () => {
+        applyFilters(mapInstance, allAreals);
+    };
+    initUI(updateMapMarkers); 
+
+    if (allAreals.length === 0) {
+        showToast('Mapa byla inicializována, ale chybí data areálů.', 'error');
+        return; // Zastavíme další inicializaci, protože nemáme co filtrovat
+    }
+    
+    // 2. Počáteční vykreslení a statistiky
+    const initialFilters = { search: '', okres: 'all', kategorie: 'all' };
+    const initialFiltered = filterAreals(mapInstance, allAreals, initialFilters);
+    updateStats(initialFiltered); 
+
+    // 3. Nastavení posluchačů událostí
+    setupListeners(mapInstance, allAreals);
+
+    // 4. Vycentrování na všechny areály po načtení
+    recenterMap(mapInstance, allAreals);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+
+// --- REGISTRACE SERVICE WORKERU PRO PWA ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registrován úspěšně:', registration);
+            })
+            .catch(error => {
+                console.error('Registrace Service Workeru selhala:', error);
+            });
+    });
+}
