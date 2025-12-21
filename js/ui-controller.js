@@ -54,6 +54,7 @@ export function updateStats(areals) {
     
     let formattedArea;
     if (totalAreaM2 >= 1000) {
+        // Převod na kilometry čtvereční, zaokrouhleno na 1 desetinné místo
         formattedArea = (totalAreaM2 / 1000).toFixed(1) + 'k';
     } else {
         formattedArea = totalAreaM2.toFixed(0);
@@ -154,7 +155,7 @@ export function initUI(onRouteChanged) {
     // 1. Načtení trasy a vykreslení při startu 
     renderRouteList(); 
     
-    // 2. Posluchače pro tlačítka
+    // 2. Posluchače pro tlačítka trasy
     clearRouteBtn.addEventListener('click', clearRoute);
 
     // 3. Posluchač pro menu toggle (Sidebar)
@@ -168,6 +169,7 @@ export function initUI(onRouteChanged) {
     document.querySelectorAll('.acc-trigger').forEach(trigger => {
         trigger.addEventListener('click', (e) => {
             const section = e.currentTarget.closest('.acc-section');
+            // Toggle třídy 'active' pro zobrazení/skrytí acc-body
             section.classList.toggle('active');
         });
     });
