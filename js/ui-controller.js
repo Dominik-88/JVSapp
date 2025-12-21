@@ -1,7 +1,6 @@
 // js/ui-controller.js
 
 import { showToast } from './app.js';
-// map-controller.js se importuje v app.js, zde stačí jen showToast pro notifikace
 
 // --- UTILITY PRO LOCAL STORAGE ---
 const LS_ROUTE_KEY = 'jvsRoute'; // Klíč pro uložení trasy
@@ -10,12 +9,11 @@ const LS_ROUTE_KEY = 'jvsRoute'; // Klíč pro uložení trasy
 function getRouteFromStorage() {
     try {
         const stored = localStorage.getItem(LS_ROUTE_KEY);
-        // Kontrola, zda jsou data platná (pole)
         const data = stored ? JSON.parse(stored) : [];
         return Array.isArray(data) ? data : [];
     } catch (e) {
         console.error("Chyba při načítání trasy z Local Storage:", e);
-        return []; // V případě chyby vrátíme prázdné pole
+        return [];
     }
 }
 
@@ -28,7 +26,7 @@ function saveRouteToStorage() {
     }
 }
 
-// --- GLOBÁLNÍ STAV (Inicializace daty z Local Storage) ---
+// --- GLOBÁLNÍ STAV ---
 export let routeList = getRouteFromStorage();
 
 // --- DOM ELEMENTY ---
@@ -38,6 +36,36 @@ const clearRouteBtn = document.getElementById('clear-route-btn');
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.getElementById('main-panel');
 const menuIcon = document.getElementById('menu-icon');
+
+// NOVÉ ELEMENTY PRO STATISTIKY
+const statCountElement = document.getElementById('stat-count');
+const statAreaElement = document.getElementById('stat-area');
+
+// --- FUNKCE PRO STATISTIKY ---
+
+/**
+ * Aktualizuje statistické údaje na základě filtrovaného seznamu areálů.
+ * @param {Array<Object>} areals - Seznam aktuálně zobrazených areálů.
+ */
+export function updateStats(areals) {
+    // 1. Počet areálů
+    const count = areals.length;
+    statCountElement.textContent = count;
+
+    // 2. Celková výměra (v m2)
+    const totalAreaM2 = areals.reduce((sum, areal) => sum + areal.plocha_m2, 0);
+    
+    // Formátování pro lepší čitelnost (např. 125000 -> 125.0k)
+    let formattedArea;
+    if (totalAreaM2 >= 1000) {
+        // Zobrazit v tisících
+        formattedArea = (totalAreaM2 / 1000).toFixed(1) + 'k';
+    } else {
+        formattedArea = totalAreaM2.toFixed(0);
+    }
+    
+    statAreaElement.textContent = formattedArea;
+}
 
 // --- FUNKCE PRO SPRÁVU TRASY ---
 
@@ -77,7 +105,7 @@ export function addArealToRoute(areal) {
     }
     routeList.push(areal);
     renderRouteList();
-    saveRouteToStorage(); // ULOŽENÍ po změně
+    saveRouteToStorage(); 
     showToast(`Areál ${areal.jmeno} přidán do trasy.`);
 }
 
@@ -87,7 +115,7 @@ export function removeArealFromRoute(id) {
     if (index !== -1) {
         const removed = routeList.splice(index, 1)[0];
         renderRouteList();
-        saveRouteToStorage(); // ULOŽENÍ po změně
+        saveRouteToStorage(); 
         showToast(`Areál ${removed.jmeno} odstraněn z trasy.`);
     }
 }
@@ -96,7 +124,7 @@ export function removeArealFromRoute(id) {
 export function clearRoute() {
     routeList = [];
     renderRouteList();
-    saveRouteToStorage(); // ULOŽENÍ po vyčištění
+    saveRouteToStorage(); 
     showToast('Trasa byla vyčištěna.', 'warning');
 }
 
@@ -122,8 +150,8 @@ export function addChatMessage(text, sender) {
 // --- INICIALIZACE ---
 
 /** Inicializuje UI prvky a posluchače událostí. */
-export function initUI(allAreals) {
-    // 1. Načtení trasy a vykreslení při startu (Data jsou již načtena v routeList)
+export function initUI() { // allAreals již nepotřebujeme zde
+    // 1. Načtení trasy a vykreslení při startu 
     renderRouteList(); 
     
     // 2. Posluchače pro tlačítka
