@@ -1,0 +1,27 @@
+// data/manual.json
+[
+    {
+        "keyword": "olej",
+        "tags": ["motor", "údržba", "výměna", "mazivo", "5w-30"],
+        "response": "Pro model XROT 95 EVO doporučujeme syntetický olej 5W-30. Pravidelná výměna je po 100 provozních hodinách nebo na začátku sezóny.",
+        "detail_link": "manual/sekce/4.1"
+    },
+    {
+        "keyword": "chyba e04",
+        "tags": ["chybový kód", "error", "porucha", "diagnostika", "napětí"],
+        "response": "Chybový kód E04 (Nízké napětí baterie). Zkontrolujte stav napětí baterie. Pokud je napětí v pořádku (>12V), proveďte restart systému. Pokud problém přetrvává, zkontrolujte relé.",
+        "detail_link": "manual/sekce/9.2"
+    },
+    {
+        "keyword": "rtk",
+        "tags": ["gps", "navigace", "přesnost", "satelit", "anténa"],
+        "response": "RTK GPS slouží k dosažení centimetrové přesnosti. Zkontrolujte, zda je správně připojena RTK anténa a zda máte stabilní spojení s referenční stanicí (zelená kontrolka). Slabý signál RTK má vliv na přesnost sekání.",
+        "detail_link": "manual/sekce/6.1"
+    },
+    {
+        "keyword": "přehřátí",
+        "tags": ["teplota", "motor", "chlazení", "hlášení", "95"],
+        "response": "V případě přehřátí (nad 95°C) okamžitě vypněte motor a nechte stroj 30 minut vychladnout. Zkontrolujte čistotu chladiče a úroveň chladicí kapaliny.",
+        "detail_link": "manual/sekce/5.3"
+    }
+]
