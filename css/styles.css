@@ -713,3 +713,217 @@ body {
 .map-tools {
     z-index: 999; /* Musí být pod sidebar-anchor (1000) */
 }
+/* ========================================================= */
+/* --- KOMPLETNÍ OPRAVA UX/UI: SIDEBAR, MAPA A AI CHAT --- */
+/* ========================================================= */
+
+/* Základní tělo a mapa */
+html, body, #map {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: hidden; /* Zabrání posunu celého okna */
+}
+
+/* ------------------- SIDEBAR KONTROLA ------------------- */
+
+/* Menu Toggle (Tlačítko pro otevření/zavření) */
+.menu-toggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background-color: #1e293b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Hlavní Sidebar kontejner */
+.sidebar-anchor {
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 85%; /* Na mobilu pokrývá většinu šířky */
+    max-width: 350px; /* Limit pro větší obrazovky */
+    height: 100vh; 
+    z-index: 1000;
+    
+    /* Výchozí stav: Skryto mimo obrazovku doleva */
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out; 
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    background: rgba(30, 41, 59, 0.95); /* Tmavé pozadí pro glass effect */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Kde třída .collapsed ZNAMENÁ, že je panel OTEVŘENÝ */
+.sidebar-anchor.collapsed {
+    transform: translateX(0); 
+}
+
+/* Vnitřní uspořádání panelu */
+.sidebar-anchor .glass-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Oprava scrollu menu */
+.menu-items {
+    flex-grow: 1; 
+    overflow-y: auto; 
+    padding: 10px 0; /* Vertikální padding */
+}
+
+/* ------------------- AKORDEON (Filtry) ------------------- */
+
+.acc-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.acc-trigger {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: white;
+    padding: 15px 20px;
+    font-size: 1.1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Tělo akordeonu - ZAJIŠTĚNÍ ZAVŘENÉHO STAVU */
+.acc-section .acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+    padding: 0 20px; /* Horizontální padding */
+}
+
+/* Aktivní (otevřený) stav */
+.acc-section.active .acc-body {
+    max-height: 500px; /* Dostatečná výška pro zobrazení obsahu */
+    padding: 10px 20px;
+}
+
+/* Otočení šipky pro aktivní stav */
+.acc-section.active .chevron {
+    transform: rotate(180deg);
+}
+
+/* ------------------- AI PLOVOUCÍ CHAT ------------------- */
+
+.floating-chat-anchor {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 990; /* Pod sidebarem, ale nad mapou */
+}
+
+.ai-toggle-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #007bff; /* Modrá */
+    color: white;
+    font-size: 1.5em;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s ease-out;
+}
+
+.ai-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+.chat-panel {
+    position: absolute;
+    bottom: 70px; /* Nad plovoucí ikonou */
+    right: 0;
+    width: 300px;
+    max-height: 400px;
+    background: #2d3748; /* Tmavé pozadí */
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    display: none; /* Ve výchozím stavu skryto */
+    flex-direction: column;
+    overflow: hidden;
+    color: #e2e8f0;
+}
+
+.chat-panel.visible {
+    display: flex;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid #4a5568;
+}
+
+.close-chat-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+
+.chat-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 15px;
+    height: 250px; /* Pevná výška chatovacího okna */
+}
+
+/* Styl pro zprávy */
+.msg {
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 80%;
+    line-height: 1.4;
+}
+.msg.user {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+}
+.msg.bot {
+    background-color: #4a5568;
+    color: white;
+    margin-right: auto;
+    border-bottom-left-radius: 0;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #4a5568;
+    background: #2d3748;
+}
+
+.chat-input-wrapper .form-input {
+    flex-grow: 1;
+    margin-right: 5px;
+    border-radius: 20px;
+    padding: 8px 15px;
+    border: 1px solid #4a5568;
+    background: #1a202c;
+    color: white;
+}
