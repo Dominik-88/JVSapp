@@ -1,6 +1,7 @@
 // js/app.js (Hlavní spouštěcí modul)
 
 import { initializeMap, renderMarkers, filterAreals, recenterMap } from './map-controller.js';
+// NOVINKA: initUI nyní přijímá callback
 import { initUI, updateStats, getChatInput, getChatSendBtn, addChatMessage } from './ui-controller.js';
 
 // --- GLOBÁLNÍ KONFIGURACE A PROMĚNNÉ ---
@@ -39,7 +40,6 @@ export function showToast(message, type = 'success') {
 
 /** Zobrazí trvalé varování o offline mapě. */
 export function showOfflineWarning() {
-    // Přidání logiky do ui-controller.js
     const toast = document.getElementById('toast');
     toast.textContent = '🗺️ Offline režim. Nové mapové dlaždice nejsou dostupné.';
     toast.className = 'show permanent-warning';
@@ -74,9 +74,7 @@ async function fetchArealData() {
 
 /**
  * Aplikuje filtry na seznam areálů a aktualizuje mapu a statistiky.
- * @param {L.Map} mapInstance - Instance mapy.
- * @param {Array<Object>} allAreals - Původní seznam areálů.
- * @returns {Array<Object>} Filtrovaný seznam areálů.
+ * MapInstance a allAreals jsou předány z init().
  */
 function applyFilters(mapInstance, allAreals) {
     const filters = {
@@ -88,11 +86,11 @@ function applyFilters(mapInstance, allAreals) {
     // 1. Filtrování areálů
     const filteredAreals = filterAreals(mapInstance, allAreals, filters);
 
-    // 2. Aktualizace Statistik (NOVÁ ČÁST)
+    // 2. Aktualizace Statistik
     updateStats(filteredAreals); 
 
     // 3. Zpětná vazba pro uživatele
-    showToast(`Zobrazeno ${filteredAreals.length} areálů.`, 'info');
+    // showToast(`Zobrazeno ${filteredAreals.length} areálů.`, 'info'); // Již není potřeba, překreslení mluví za vše
     
     return filteredAreals;
 }
@@ -174,21 +172,28 @@ function setupListeners(mapInstance, allAreals) {
 async function init() {
     const allAreals = await fetchArealData();
     if (allAreals.length === 0) {
-        // Zde můžeme ještě spustit mapu, i když nemáme markery (kvůli PWA shellu)
         const mapInstance = initializeMap(allAreals);
         initUI();
         return;
     }
+
+    // NOVÁ FUNKCE: Callback pro ui-controller.js
+    // Vynutí překreslení mapy s aktuálními filtry po změně trasy
+    const updateMapMarkers = () => {
+        applyFilters(mapInstance, allAreals);
+        showToast('Mapa aktualizována dle změn trasy.', 'info');
+    };
     
     // 1. Inicializace Mapy a UI
     const mapInstance = initializeMap(allAreals);
-    initUI();
+    // Důležité: Předání callbacku do initUI!
+    initUI(updateMapMarkers); 
     
-    // 2. Počáteční vykreslení a statistiky (přednastaveno na Vše)
+    // 2. Počáteční vykreslení a statistiky
     const initialFilters = { search: '', okres: 'all', kategorie: 'all' };
     const initialFiltered = filterAreals(mapInstance, allAreals, initialFilters);
     
-    // Důležité: Počáteční aktualizace statistik!
+    // Počáteční aktualizace statistik!
     updateStats(initialFiltered); 
 
     // 3. Nastavení posluchačů událostí
