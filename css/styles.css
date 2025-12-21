@@ -521,3 +521,117 @@ body {
 }
 
 /* Konec nových stylů */
+/* ... (předchozí CSS styly zůstávají) ... */
+
+/* -------------------------------------- */
+/* 15. Detailní Panel Areálu (Modal/Sidebar) */
+/* -------------------------------------- */
+
+#areal-detail-panel {
+    position: fixed;
+    bottom: 0; /* Na mobilu se vysune zespodu */
+    right: 0;
+    width: 100%; /* Plná šířka na mobilu */
+    max-width: 400px; /* Omezení šířky na desktopu */
+    height: auto;
+    max-height: 80%;
+    padding: 20px;
+    background: var(--bg-panel-color); /* Použijeme barvu panelu */
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 500; /* Nad mapou, pod hlavním sidebar/toast */
+    transform: translateY(100%); /* Skryto dole (mimo viewport) */
+    opacity: 0;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+    overflow-y: auto;
+}
+
+#areal-detail-panel.visible {
+    transform: translateY(0); /* Zobrazeno dole */
+    opacity: 1;
+}
+
+/* Desktop úprava (vysouváme zprava) */
+@media (min-width: 768px) {
+    #areal-detail-panel {
+        width: 350px;
+        height: 100%;
+        top: 0;
+        bottom: 0;
+        right: -350px; /* Skryto vpravo (mimo viewport) */
+        border-radius: 0;
+        border-left: 1px solid var(--border-color);
+        transform: none; /* Zrušíme transformY, používáme right */
+        transition: right 0.4s ease-out;
+    }
+    #areal-detail-panel.visible {
+        right: 0; /* Zobrazeno vpravo */
+    }
+}
+
+/* Styly vnitřních prvků detailního panelu */
+#areal-detail-panel h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+}
+
+.detail-subtitle {
+    color: var(--text-color-muted);
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.detail-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.detail-stats .stat-box {
+    background: var(--bg-color);
+    padding: 8px;
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+.detail-stats p {
+    margin: 0;
+    font-size: 0.8em;
+    color: var(--text-color-muted);
+}
+.detail-stats b {
+    font-size: 1.1em;
+    color: var(--text-color);
+    display: block;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.btn-close-detail {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* -------------------------------------- */
+/* 16. Ostatní UX (Toast úprava pro trvalé varování) */
+/* -------------------------------------- */
+
+/* Nový styl pro trvalé offline varování */
+#toast.permanent-warning {
+    opacity: 1 !important; 
+    visibility: visible !important;
+    background-color: var(--warning-color); 
+    color: var(--text-color-dark);
+    z-index: 10000;
+    top: 20px;
+    bottom: auto; 
+    border: 1px solid #ea580c; 
+    padding: 12px 20px;
+}
