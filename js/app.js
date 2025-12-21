@@ -211,3 +211,17 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+// js/app.js (Registrace Service Workeru)
+
+// --- REGISTRACE SERVICE WORKERU PRO PWA ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registrován úspěšně:', registration);
+            })
+            .catch(error => {
+                console.error('Registrace Service Workeru selhala:', error);
+            });
+    });
+}
