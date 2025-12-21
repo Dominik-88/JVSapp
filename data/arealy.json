@@ -1,0 +1,576 @@
+[
+  {
+    "okres": "PI",
+    "jmeno": "VDJ Amerika II",
+    "kategorie": "I.",
+    "plocha_m2": 3303,
+    "gps_rtk": {
+      "lat": 49.3082,
+      "lng": 14.1504
+    },
+    "adresa": {
+      "ulice": "Amerika II",
+      "mesto": "Písek"
+    }
+  },
+  {
+    "okres": "ST",
+    "jmeno": "VDJ Drahonice",
+    "kategorie": "I.",
+    "plocha_m2": 5953,
+    "gps_rtk": {
+      "lat": 49.3521,
+      "lng": 13.9015
+    },
+    "adresa": {
+      "ulice": "Drahonice",
+      "mesto": "Strakonice"
+    }
+  },
+  {
+    "okres": "ST",
+    "jmeno": "VDJ Vodňany",
+    "kategorie": "I.",
+    "plocha_m2": 1594,
+    "gps_rtk": {
+      "lat": 49.1678,
+      "lng": 14.1712
+    },
+    "adresa": {
+      "ulice": "Vodňany",
+      "mesto": "Strakonice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Hlavatce",
+    "kategorie": "II.",
+    "plocha_m2": 7968,
+    "gps_rtk": {
+      "lat": 49.1643,
+      "lng": 14.5126
+    },
+    "adresa": {
+      "ulice": "Hlavatce",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "PT",
+    "jmeno": "VDJ Šibeniční vrch I",
+    "kategorie": "I.",
+    "plocha_m2": 1835,
+    "gps_rtk": {
+      "lat": 49.0135,
+      "lng": 13.9854
+    },
+    "adresa": {
+      "ulice": "Šibeniční vrch I",
+      "mesto": "Prachatice"
+    }
+  },
+  {
+    "okres": "PT",
+    "jmeno": "ÚV Husinecka přehrada",
+    "kategorie": "II.",
+    "plocha_m2": 4908,
+    "gps_rtk": {
+      "lat": 49.0506,
+      "lng": 14.0725
+    },
+    "adresa": {
+      "ulice": "Husinecká přehrada",
+      "mesto": "Prachatice"
+    }
+  },
+  {
+    "okres": "PT",
+    "jmeno": "VDJ Šibeniční vrch II",
+    "kategorie": "I.",
+    "plocha_m2": 3206,
+    "gps_rtk": {
+      "lat": 49.0201,
+      "lng": 14.0001
+    },
+    "adresa": {
+      "ulice": "Šibeniční vrch II",
+      "mesto": "Prachatice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Zálužany",
+    "kategorie": "I.",
+    "plocha_m2": 2500,
+    "gps_rtk": {
+      "lat": 49.1000,
+      "lng": 14.2000
+    },
+    "adresa": {
+      "ulice": "Zálužany",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Ptáčník",
+    "kategorie": "II.",
+    "plocha_m2": 1500,
+    "gps_rtk": {
+      "lat": 49.1100,
+      "lng": 14.3000
+    },
+    "adresa": {
+      "ulice": "Ptáčník",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Zdoba",
+    "kategorie": "I.",
+    "plocha_m2": 3500,
+    "gps_rtk": {
+      "lat": 49.1200,
+      "lng": 14.4000
+    },
+    "adresa": {
+      "ulice": "Zdoba",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Domoradice",
+    "kategorie": "II.",
+    "plocha_m2": 1800,
+    "gps_rtk": {
+      "lat": 49.1300,
+      "lng": 14.4500
+    },
+    "adresa": {
+      "ulice": "Domoradice",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CK",
+    "jmeno": "VDJ Horní Brána",
+    "kategorie": "I.",
+    "plocha_m2": 4000,
+    "gps_rtk": {
+      "lat": 48.8100,
+      "lng": 14.3200
+    },
+    "adresa": {
+      "ulice": "Horní Brána",
+      "mesto": "Český Krumlov"
+    }
+  },
+  {
+    "okres": "CK",
+    "jmeno": "VDJ Netřebice",
+    "kategorie": "II.",
+    "plocha_m2": 2200,
+    "gps_rtk": {
+      "lat": 48.8500,
+      "lng": 14.4000
+    },
+    "adresa": {
+      "ulice": "Netřebice",
+      "mesto": "Český Krumlov"
+    }
+  },
+  {
+    "okres": "PT",
+    "jmeno": "VDJ Plešivec",
+    "kategorie": "I.",
+    "plocha_m2": 5000,
+    "gps_rtk": {
+      "lat": 49.0700,
+      "lng": 13.9500
+    },
+    "adresa": {
+      "ulice": "Plešivec",
+      "mesto": "Prachatice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Doudleby",
+    "kategorie": "II.",
+    "plocha_m2": 1000,
+    "gps_rtk": {
+      "lat": 48.9000,
+      "lng": 14.5000
+    },
+    "adresa": {
+      "ulice": "Doudleby",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Jankov",
+    "kategorie": "I.",
+    "plocha_m2": 3000,
+    "gps_rtk": {
+      "lat": 48.9500,
+      "lng": 14.5500
+    },
+    "adresa": {
+      "ulice": "Jankov",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Hosín II",
+    "kategorie": "II.",
+    "plocha_m2": 1700,
+    "gps_rtk": {
+      "lat": 49.0000,
+      "lng": 14.4500
+    },
+    "adresa": {
+      "ulice": "Hosín II",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Chlum",
+    "kategorie": "I.",
+    "plocha_m2": 4500,
+    "gps_rtk": {
+      "lat": 49.0500,
+      "lng": 14.5000
+    },
+    "adresa": {
+      "ulice": "Chlum",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Chotýčany",
+    "kategorie": "II.",
+    "plocha_m2": 2800,
+    "gps_rtk": {
+      "lat": 49.1000,
+      "lng": 14.5500
+    },
+    "adresa": {
+      "ulice": "Chotýčany",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Rudolfov III",
+    "kategorie": "I.",
+    "plocha_m2": 3200,
+    "gps_rtk": {
+      "lat": 49.1500,
+      "lng": 14.6000
+    },
+    "adresa": {
+      "ulice": "Rudolfov III",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Rimov - Vesce",
+    "kategorie": "II.",
+    "plocha_m2": 1900,
+    "gps_rtk": {
+      "lat": 48.9200,
+      "lng": 14.5800
+    },
+    "adresa": {
+      "ulice": "Rimov - Vesce",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Hosin",
+    "kategorie": "I.",
+    "plocha_m2": 4200,
+    "gps_rtk": {
+      "lat": 49.0100,
+      "lng": 14.4200
+    },
+    "adresa": {
+      "ulice": "Hosin",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Včelná",
+    "kategorie": "II.",
+    "plocha_m2": 2100,
+    "gps_rtk": {
+      "lat": 48.9800,
+      "lng": 14.4000
+    },
+    "adresa": {
+      "ulice": "Včelná",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Húry",
+    "kategorie": "I.",
+    "plocha_m2": 5500,
+    "gps_rtk": {
+      "lat": 49.0300,
+      "lng": 14.4700
+    },
+    "adresa": {
+      "ulice": "Húry",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Chlumec",
+    "kategorie": "II.",
+    "plocha_m2": 1400,
+    "gps_rtk": {
+      "lat": 49.0800,
+      "lng": 14.5300
+    },
+    "adresa": {
+      "ulice": "Chlumec",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Olešník",
+    "kategorie": "I.",
+    "plocha_m2": 380,
+    "gps_rtk": {
+      "lat": 49.1234,
+      "lng": 14.3312
+    },
+    "adresa": {
+      "ulice": "Olešník",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "ČS Bukovec",
+    "kategorie": "I.",
+    "plocha_m2": 4943,
+    "gps_rtk": {
+      "lat": 49.0987,
+      "lng": 14.4567
+    },
+    "adresa": {
+      "ulice": "Bukovec",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "VDJ Heřman",
+    "kategorie": "II.",
+    "plocha_m2": 982,
+    "gps_rtk": {
+      "lat": 49.1555,
+      "lng": 14.4888
+    },
+    "adresa": {
+      "ulice": "Heřman",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "ČS Vidov u řeky",
+    "kategorie": "II.",
+    "plocha_m2": 2501,
+    "gps_rtk": {
+      "lat": 49.1991,
+      "lng": 14.5019
+    },
+    "adresa": {
+      "ulice": "Vidov u řeky",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "Vrt Vidov",
+    "kategorie": "II.",
+    "plocha_m2": 470,
+    "gps_rtk": {
+      "lat": 49.2010,
+      "lng": 14.4990
+    },
+    "adresa": {
+      "ulice": "Vrt Vidov",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "CB",
+    "jmeno": "ÚV Plav",
+    "kategorie": "I.",
+    "plocha_m2": 74777,
+    "gps_rtk": {
+      "lat": 49.1764,
+      "lng": 14.5037
+    },
+    "adresa": {
+      "ulice": "ÚV Plav",
+      "mesto": "České Budějovice"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "VDJ Čekanice",
+    "kategorie": "I.",
+    "plocha_m2": 6344,
+    "gps_rtk": {
+      "lat": 49.4343,
+      "lng": 14.7070
+    },
+    "adresa": {
+      "ulice": "Čekanice",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "VDJ Svatá Anna",
+    "kategorie": "I.",
+    "plocha_m2": 4153,
+    "gps_rtk": {
+      "lat": 49.3668,
+      "lng": 14.8816
+    },
+    "adresa": {
+      "ulice": "Svatá Anna",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "VDJ Bezděčín",
+    "kategorie": "I.",
+    "plocha_m2": 2700,
+    "gps_rtk": {
+      "lat": 49.3800,
+      "lng": 14.6500
+    },
+    "adresa": {
+      "ulice": "Bezděčín",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "PI",
+    "jmeno": "VDJ Milevsko",
+    "kategorie": "I.",
+    "plocha_m2": 3900,
+    "gps_rtk": {
+      "lat": 49.4500,
+      "lng": 14.3500
+    },
+    "adresa": {
+      "ulice": "Milevsko",
+      "mesto": "Písek"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "VDJ Hodušín",
+    "kategorie": "II.",
+    "plocha_m2": 1600,
+    "gps_rtk": {
+      "lat": 49.4000,
+      "lng": 14.7500
+    },
+    "adresa": {
+      "ulice": "Hodušín",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "PI",
+    "jmeno": "VDJ Všechov",
+    "kategorie": "II.",
+    "plocha_m2": 2300,
+    "gps_rtk": {
+      "lat": 49.2500,
+      "lng": 14.2500
+    },
+    "adresa": {
+      "ulice": "Všechov",
+      "mesto": "Písek"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "VDJ Zlukov",
+    "kategorie": "I.",
+    "plocha_m2": 3400,
+    "gps_rtk": {
+      "lat": 49.3000,
+      "lng": 14.7800
+    },
+    "adresa": {
+      "ulice": "Zlukov",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "ÚV Tábor",
+    "kategorie": "I.",
+    "plocha_m2": 8000,
+    "gps_rtk": {
+      "lat": 49.4100,
+      "lng": 14.6500
+    },
+    "adresa": {
+      "ulice": "ÚV Tábor",
+      "mesto": "Tábor"
+    }
+  },
+  {
+    "okres": "PI",
+    "jmeno": "ČS Sudoměřice",
+    "kategorie": "II.",
+    "plocha_m2": 1200,
+    "gps_rtk": {
+      "lat": 49.2000,
+      "lng": 14.1000
+    },
+    "adresa": {
+      "ulice": "Sudoměřice",
+      "mesto": "Písek"
+    }
+  },
+  {
+    "okres": "TA",
+    "jmeno": "Provozní Vodojem Tábor",
+    "kategorie": "I.",
+    "plocha_m2": 4800,
+    "gps_rtk": {
+      "lat": 49.4200,
+      "lng": 14.6800
+    },
+    "adresa": {
+      "ulice": "Provozní Vodojem",
+      "mesto": "Tábor"
+    }
+  }
+]
