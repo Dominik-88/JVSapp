@@ -18,7 +18,7 @@ const defaultIcon = L.icon({
     shadowSize: [41, 41]
 });
 
-// Ikona pro areály, které jsou v trase
+// Ikona pro areály, které jsou v trase (Červená)
 const routeIcon = L.icon({
     iconUrl: './assets/icons/marker-icon-red.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
@@ -44,7 +44,7 @@ export function initializeMap(areals) {
     map = L.map('map').setView([initialLat, initialLng], 9);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        // Zvýšený maxZoom pro lepší kvalitu dlaždic na mobilu
+        // Zvýšený maxZoom pro lepší kvalitu dlaždic
         maxZoom: 22, 
         attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
@@ -68,8 +68,6 @@ export function renderMarkers(mapInstance, areals) {
         markers = [];
     }
 
-    // Leaflet Marker Cluster je nutný, tak přidáme odkaz na něj do HTML!
-    // V HTML je: <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     markerClusterGroup = L.markerClusterGroup({
         chunkedLoading: true,
         maxClusterRadius: 40
@@ -127,7 +125,7 @@ export function displayArealDetail(areal) {
         <h4>Akce</h4>
         <div class="action-buttons">
             ${routeButtonHTML}
-            <a href="http://googleusercontent.com/maps.google.com/?q=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
+            <a href="https://www.google.com/maps/search/?api=1&query=${areal.gps_rtk.lat},${areal.gps_rtk.lng}" target="_blank" class="btn btn-success">
                 <i class="fas fa-location-arrow"></i> Navigovat (Mapy)
             </a>
         </div>
@@ -141,6 +139,7 @@ export function displayArealDetail(areal) {
     if (!isArealOnRoute) {
         document.getElementById('add-to-route-btn').addEventListener('click', () => {
             addArealToRoute(areal);
+            // Po přidání aktualizujeme detailní panel, aby se tlačítko deaktivovalo
             displayArealDetail(areal); 
         });
     }
@@ -149,7 +148,8 @@ export function displayArealDetail(areal) {
         detailPanel.classList.remove('visible');
     });
 
-    map.flyTo([areal.gps_rtk.lat, areal.gps_rtk.lng], map.getZoom(), { duration: 0.5 });
+    // Přiblížení na marker
+    map.flyTo([areal.gps_rtk.lat, areal.gps_rtk.lng], 16, { duration: 0.5 });
 }
 
 
@@ -176,7 +176,8 @@ export function recenterMap(mapInstance, areals) {
     if (areals && areals.length > 0) {
         const latlngs = areals.map(a => [a.gps_rtk.lat, a.gps_rtk.lng]);
         const bounds = L.latLngBounds(latlngs);
-        mapInstance.flyToBounds(bounds, { padding: [50, 50] });
+        // Padding zajišťuje, že markery nejsou schované pod Sidebarem
+        mapInstance.flyToBounds(bounds, { padding: [20, 370, 20, 20], duration: 1.0 });
     } else {
         // Nouzová pozice (CZ střed) a nižší zoom
         mapInstance.flyTo([49.7, 15.5], 8, { duration: 1.0 });
