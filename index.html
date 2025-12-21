@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="cs"><head>
+<html lang="cs">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JVS Management System • Barbieri PWA</title>
@@ -10,13 +11,15 @@
     <link rel="manifest" href="manifest.json">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-    
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div id="map"></div>
+
+    <button class="menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars" id="menu-icon"></i>
+    </button>
 
     <div class="sidebar-anchor" id="main-panel">
         <div class="glass-panel">
@@ -28,9 +31,6 @@
                         <p>Údržba areálů</p>
                     </div>
                 </div>
-                <button class="menu-toggle" id="menu-toggle">
-                    <i class="fas fa-bars" id="menu-icon"></i>
-                </button>
             </div>
 
             <div class="menu-items">
@@ -88,8 +88,7 @@
                         <i class="fas fa-chevron-down chevron"></i>
                     </button>
                     <div class="acc-body">
-                        <div id="route-list">
-                            </div>
+                        <div id="route-list"></div>
                     </div>
                     <div class="route-actions">
                         <button class="btn btn-s" id="clear-route-btn">
@@ -100,32 +99,8 @@
                         </a>
                     </div>
                 </div>
-
-                <div class="acc-section" id="manu-ai-section">
-                    <button class="acc-trigger" data-accordion="manu-ai-section">
-                        <i class="fas fa-robot m-icon"></i> Barbieri e-ManuAI
-                        <i class="fas fa-chevron-down chevron"></i>
-                    </button>
-                    <div class="acc-body">
-                        <div id="barbieri-chat-container">
-                            <p class="stats-footer-note">Manuál pro XROT 95 EVO. Zeptejte se na klíčové pojmy (např. 'olej', 'chyba', 'rtk').</p>
-                            <div class="chat-wrapper">
-                                <div id="chat-body" class="chat-body">
-                                    </div>
-                                <div class="chat-input-wrapper">
-                                    <input type="text" id="chat-input" class="form-input" placeholder="Zeptejte se na údržbu XROT...">
-                                    <button id="chat-send-btn" class="btn btn-p btn-sm">Odeslat</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="areal-detail-panel" class="detail-panel">
-        </div>
+                
+            </div> </div> </div> <div id="areal-detail-panel" class="detail-panel"></div>
 
     <div class="map-tools">
         <div class="tool-btn" id="recenter-map-btn" title="Vycentrovat mapu">
@@ -133,10 +108,29 @@
         </div>
     </div>
 
-    <div id="toast"></div>
+    <div id="ai-chat-anchor" class="floating-chat-anchor">
+        <button class="ai-toggle-btn" id="ai-toggle-btn">
+            <i class="fas fa-robot"></i>
+        </button>
+        <div id="ai-chat-panel" class="chat-panel">
+            <div class="chat-header">
+                <h4>Barbieri e-ManuAI</h4>
+                <button class="close-chat-btn" id="close-ai-chat-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="chat-note">Manuál pro XROT 95 EVO. Zeptejte se na údržbu.</p>
+            <div id="chat-body" class="chat-body"></div>
+            <div class="chat-input-wrapper">
+                <input type="text" id="chat-input" class="form-input" placeholder="Zeptejte se na údržbu XROT...">
+                <button id="chat-send-btn" class="btn btn-p btn-sm">Odeslat</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class=""></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     <script type="module" src="js/app.js"></script>
 
-
-</body></html>
+</body>
+</html>
