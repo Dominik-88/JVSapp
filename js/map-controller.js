@@ -44,7 +44,8 @@ export function initializeMap(areals) {
     map = L.map('map').setView([initialLat, initialLng], 9);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
+        // Zvýšený maxZoom pro lepší kvalitu dlaždic na mobilu
+        maxZoom: 22, 
         attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
@@ -138,7 +139,6 @@ export function displayArealDetail(areal) {
     if (!isArealOnRoute) {
         document.getElementById('add-to-route-btn').addEventListener('click', () => {
             addArealToRoute(areal);
-            // Znovu zobrazíme detail, aby se aktualizoval stav tlačítka
             displayArealDetail(areal); 
         });
     }
@@ -168,7 +168,7 @@ export function filterAreals(mapInstance, allAreals, filters) {
 }
 
 /**
- * Vycentruje mapu na všechny areály nebo na aktuální polohu.
+ * Vycentruje mapu na všechny areály nebo na nouzovou pozici.
  */
 export function recenterMap(mapInstance, areals) {
     if (areals && areals.length > 0) {
@@ -176,6 +176,8 @@ export function recenterMap(mapInstance, areals) {
         const bounds = L.latLngBounds(latlngs);
         mapInstance.flyToBounds(bounds, { padding: [50, 50] });
     } else {
+        // Nouzová pozice (CZ střed) a nižší zoom
         mapInstance.flyTo([49.7, 15.5], 8, { duration: 1.0 });
+        showToast('Nebyly nalezeny žádné areály k vycentrování.', 'warning');
     }
 }
