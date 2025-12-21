@@ -1,732 +1,111 @@
+/* ========================================================= */
+/* --- GLOBAL RESET & BASE STYLES --- */
+/* ========================================================= */
 :root {
-  /* Barevné proměnné - dle specifikace v README */
-  --primary-color: #2563eb;    /* Hlavní modrá (Indigo 600) */
-  --success-color: #10b981;    /* Zelená (Emerald 500) */
-  --bg-color: #f1f5f9;         /* Světle šedé pozadí */
-  --panel-bg: rgba(255, 255, 255, 0.9); /* Skleněný efekt panelu */
-  --border-color: #e5e7eb;     /* Světle šedý okraj */
-  --text-color: #1f2937;       /* Tmavý text */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --color-primary: #007bff; /* Modrá */
+    --color-secondary: #6c757d; /* Šedá */
+    --color-success: #28a745; /* Zelená */
+    --color-warning: #ffc107; /* Žlutá */
+    --color-error: #dc3545; /* Červená */
+    --color-bg-dark: #1e293b; /* Tmavé pozadí (Slate 800) */
+    --color-bg-light: #f8f9fa; /* Světlé pozadí */
+    --color-text: #e2e8f0; /* Světlý text */
+    --color-text-dark: #2d3748; /* Tmavý text */
 }
 
-/* 1. Global Reset a Typografie */
-* {
+*, *::before, *::after {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    color: var(--text-color);
-    line-height: 1.6;
-    overflow: hidden; 
-}
-
-/* 2. Mapa */
-#map {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100vh;
-    z-index: 1;
-}
-
-/* Stylování pop-upů Leaflet */
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
-    border-radius: 8px;
-    box-shadow: var(--shadow-md);
-}
-
-.leaflet-popup-content {
-    padding: 10px;
-    font-size: 14px;
-}
-
-/* 3. Postranní panel (Sidebar) */
-.sidebar-anchor {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 320px;
-    padding: 15px;
-    z-index: 1000;
-    transition: transform 0.3s ease-in-out;
-}
-
-.glass-panel {
-    background-color: var(--panel-bg);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Kolaps panelu (pro desktop) */
-.sidebar-anchor.collapsed {
-    transform: translateX(-300px);
-}
-
-.sidebar-anchor.collapsed .menu-toggle {
-    transform: translateX(300px);
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* 4. Záhlaví a Branding */
-.header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-}
-
-.brand-compact {
-    display: flex;
-    align-items: center;
-}
-
-.logo-circle {
-    width: 30px;
-    height: 30px;
-    background-color: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-    margin-right: 10px;
-}
-
-.brand-text h1 {
-    font-size: 16px;
-    font-weight: 800;
-    margin: 0;
-}
-
-.brand-text p {
-    font-size: 12px;
-    color: #6b7280;
-    margin: 0;
-}
-
-.menu-toggle {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    color: var(--primary-color);
-    padding: 5px;
-    border-radius: 50%;
-    transition: all 0.3s ease-in-out;
-    outline: none;
-}
-
-/* 5. Menu a Akordeon (Filtry, Statistiky, Trasa) */
-.menu-items {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 0 15px 15px 15px;
-}
-
-.acc-section {
-    margin-top: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.acc-trigger {
-    width: 100%;
-    padding: 12px 15px;
-    background-color: white;
-    border: none;
-    text-align: left;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-color);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.acc-trigger:hover {
-    background-color: var(--bg-color);
-}
-
-.acc-trigger .m-icon {
-    margin-right: 8px;
-    color: var(--primary-color);
-}
-
-.acc-trigger .chevron {
-    transition: transform 0.3s ease-in-out;
-}
-
-.acc-section.active .acc-trigger .chevron {
-    transform: rotate(180deg);
-}
-
-.acc-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-    padding: 0 15px;
-    background-color: var(--bg-color);
-}
-
-.acc-section.active .acc-body {
-    max-height: 500px;
-    padding: 15px;
-    border-top: 1px solid var(--border-color);
-}
-
-/* 6. Formuláře (Filtry) */
-.form-input, .form-select {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 14px;
-    color: var(--text-color);
-    background-color: white;
-}
-
-/* 7. Tlačítka */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 14px;
-    text-decoration: none;
-    transition: background-color 0.2s, transform 0.1s;
-    width: 100%;
-    margin-top: 5px;
-}
-
-.btn i {
-    margin-right: 8px;
-}
-
-.btn-p { /* Primary */
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.btn-p:hover {
-    background-color: #1d4ed8;
-}
-
-.btn-success {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.btn-success:hover {
-    background-color: #059669;
-}
-
-.btn-s { /* Secondary / Clear */
-    background-color: #d1d5db;
-    color: var(--text-color);
-    border: 1px solid #9ca3af;
-}
-
-.btn-s:hover {
-    background-color: #e5e7eb;
-}
-
-/* 8. Statistiky a Badge */
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.stat-box {
-    padding: 10px;
-    background-color: white;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    text-align: center;
-}
-
-.stat-box p {
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 5px;
-}
-
-.stat-box b {
-    font-size: 18px;
-    color: var(--primary-color);
-    display: block;
-}
-
-.stats-footer-note {
-    font-size: 11px;
-    color: #9ca3af;
-    text-align: center;
-}
-
-.badge {
-    background-color: var(--success-color);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    margin-left: 5px;
-}
-
-/* 9. Akce a Seznam trasy */
-.route-actions {
-    display: flex;
-    gap: 10px;
-    padding: 15px;
-    border-top: 1px solid var(--border-color);
-    flex-shrink: 0;
-}
-
-#route-list {
-    margin-top: 5px;
-}
-
-.route-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px dashed #d1d5db;
-    font-size: 14px;
-}
-
-.route-item:last-child {
-    border-bottom: none;
-}
-
-.route-item-name {
-    font-weight: 600;
-}
-
-.route-item-remove {
-    background: none;
-    border: none;
-    color: #ef4444; /* Danger color */
-    cursor: pointer;
-    font-size: 14px;
-    padding: 5px;
-}
-
-/* 10. Mapové nástroje */
-.map-tools {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.tool-btn {
-    width: 45px;
-    height: 45px;
-    background-color: var(--panel-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 18px;
-    color: var(--primary-color);
-    transition: background-color 0.2s;
-}
-
-.tool-btn:hover {
-    background-color: var(--bg-color);
-}
-
-.ai-tool-btn {
-    background-color: #4f46e5; 
-    color: white;
-}
-
-.ai-tool-btn:hover {
-    background-color: #4338ca;
-}
-
-/* 11. Toast Notifikace */
-#toast {
-    visibility: hidden;
-    min-width: 250px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 8px;
-    padding: 16px;
-    position: fixed;
-    z-index: 10001;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 15px;
-    box-shadow: var(--shadow-md);
-}
-
-#toast.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-
-@keyframes fadein {
-    from {bottom: 0; opacity: 0;}
-    to {bottom: 30px; opacity: 1;}
-}
-
-@keyframes fadeout {
-    from {bottom: 30px; opacity: 1;}
-    to {bottom: 0; opacity: 0;}
-}
-
-/* 12. Media Queries (Responzivita pro mobil) */
-@media (max-width: 768px) {
-    .sidebar-anchor {
-        width: 100%;
-        padding: 10px;
-    }
-    
-    .glass-panel {
-        border-radius: 0;
-    }
-
-    /* Kolaps panelu na mobilu nahoru */
-    .sidebar-anchor.collapsed {
-        transform: translateY(-90%);
-        height: 100%;
-    }
-    
-    .sidebar-anchor.collapsed .menu-toggle {
-        transform: none;
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background-color: rgba(255, 255, 255, 0.8);
-        color: var(--primary-color);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .route-actions {
-        flex-direction: column;
-        gap: 5px;
-    }
-    
-    .map-tools {
-        bottom: 70px; 
-        right: 10px;
-    }
-}
-/* ... Předchozí styly (1. - 12.) ... */
-
-/* 13. Styly pro Barbieri e-ManuAI Chat */
-
-.acc-section.active #barbieri-chat-container {
-    height: 400px; /* Nastavení pevné výšky kontejneru */
-    display: flex;
-    flex-direction: column;
-}
-
-.chat-wrapper {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: white;
-    overflow: hidden;
-    margin-top: 10px;
-}
-
-.chat-body {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-}
-
-.msg {
-    max-width: 85%;
-    padding: 8px 12px;
-    border-radius: 15px;
-    margin-bottom: 8px;
-    font-size: 14px;
-    line-height: 1.4;
-    word-wrap: break-word;
-}
-
-.msg.user {
-    align-self: flex-end;
-    background-color: var(--primary-color);
-    color: white;
-    border-bottom-right-radius: 4px;
-}
-
-.msg.bot {
-    align-self: flex-start;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    border-bottom-left-radius: 4px;
-    border: 1px solid var(--border-color);
-}
-
-.chat-input-wrapper {
-    display: flex;
-    padding: 10px;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--bg-color);
-}
-
-.chat-input-wrapper .form-input {
-    flex-grow: 1;
-    margin-bottom: 0;
-    margin-right: 10px;
-}
-
-.chat-input-wrapper .btn-sm {
-    padding: 8px 12px;
-    width: auto;
-    margin-top: 0;
-}
-
-/* Konec nových stylů */
-/* ... (předchozí CSS styly zůstávají) ... */
-
-/* -------------------------------------- */
-/* 15. Detailní Panel Areálu (Modal/Sidebar) */
-/* -------------------------------------- */
-
-#areal-detail-panel {
-    position: fixed;
-    bottom: 0; /* Na mobilu se vysune zespodu */
-    right: 0;
-    width: 100%; /* Plná šířka na mobilu */
-    max-width: 400px; /* Omezení šířky na desktopu */
-    height: auto;
-    max-height: 80%;
-    padding: 20px;
-    background: var(--bg-panel-color); /* Použijeme barvu panelu */
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 500; /* Nad mapou, pod hlavním sidebar/toast */
-    transform: translateY(100%); /* Skryto dole (mimo viewport) */
-    opacity: 0;
-    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
-    overflow-y: auto;
-}
-
-#areal-detail-panel.visible {
-    transform: translateY(0); /* Zobrazeno dole */
-    opacity: 1;
-}
-
-/* Desktop úprava (vysouváme zprava) */
-@media (min-width: 768px) {
-    #areal-detail-panel {
-        width: 350px;
-        height: 100%;
-        top: 0;
-        bottom: 0;
-        right: -350px; /* Skryto vpravo (mimo viewport) */
-        border-radius: 0;
-        border-left: 1px solid var(--border-color);
-        transform: none; /* Zrušíme transformY, používáme right */
-        transition: right 0.4s ease-out;
-    }
-    #areal-detail-panel.visible {
-        right: 0; /* Zobrazeno vpravo */
-    }
-}
-
-/* Styly vnitřních prvků detailního panelu */
-#areal-detail-panel h3 {
-    color: var(--primary-color);
-    margin-top: 0;
-}
-
-.detail-subtitle {
-    color: var(--text-color-muted);
-    font-size: 0.9em;
-    margin-bottom: 15px;
-}
-
-.detail-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 10px 0;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-}
-.detail-stats .stat-box {
-    background: var(--bg-color);
-    padding: 8px;
-    border-radius: var(--border-radius);
-    text-align: center;
-}
-.detail-stats p {
-    margin: 0;
-    font-size: 0.8em;
-    color: var(--text-color-muted);
-}
-.detail-stats b {
-    font-size: 1.1em;
-    color: var(--text-color);
-    display: block;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-.btn-close-detail {
-    width: 100%;
-    margin-top: 10px;
-}
-
-/* -------------------------------------- */
-/* 16. Ostatní UX (Toast úprava pro trvalé varování) */
-/* -------------------------------------- */
-
-/* Nový styl pro trvalé offline varování */
-#toast.permanent-warning {
-    opacity: 1 !important; 
-    visibility: visible !important;
-    background-color: var(--warning-color); 
-    color: var(--text-color-dark);
-    z-index: 10000;
-    top: 20px;
-    bottom: auto; 
-    border: 1px solid #ea580c; 
-    padding: 12px 20px;
-}
-/* ========================================================= */
-/* --- KRITICKÁ OPRAVA SIDEBARU PRO MOBILNÍ UX (iOS/PWA) --- */
-/* ========================================================= */
-
-.sidebar-anchor {
-    /* Zajištění plné výšky a fixní pozice na mobilu */
-    position: fixed; 
-    top: 0;
-    left: 0;
-    width: 85%; /* Na mobilu pokrývá většinu šířky */
-    max-width: 350px; /* Limit pro větší obrazovky */
-    height: 100vh; 
-    z-index: 1000;
-    
-    /* Výchozí stav: Skryto mimo obrazovku doleva */
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out; 
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
-    overflow-y: auto; /* Povolit posun obsahu */
-}
-
-/* Kde třída .collapsed ZNAMENÁ, že je panel OTEVŘENÝ */
-.sidebar-anchor.collapsed {
-    /* Stav po kliknutí na menu-toggle: Zobrazeno */
-    transform: translateX(0); 
-}
-
-/* Oprava kontejneru pro vnitřní obsah */
-.sidebar-anchor .glass-panel {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Zajištění, že se akordeonové sekce neztratí */
-.menu-items {
-    flex-grow: 1; 
-    overflow-y: auto; 
-    padding-bottom: 20px; 
-}
-
-/* Vizuální korekce otevřeného akordeonu */
-.acc-section.active .acc-body {
-    max-height: 500px; 
-    padding: 10px 15px;
-}
-
-/* ========================================================= */
-/* --- AKORDEON OPRAVA (Výchozí stav ZAVŘENO) --- */
-/* ========================================================= */
-
-.acc-section .acc-body {
-    /* Zajistí, že je obsah akordeonu na začátku skrytý */
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-    padding: 0 15px;
-}
-
-.acc-section.active .acc-body {
-    /* Přepsání pro aktivní stav */
-    max-height: 500px; /* Dostatečná výška */
-    padding: 10px 15px;
-}
-
-/* --- MAPA A NÁSTROJE --- */
-
-/* Vylepšení mapového tlačítka (menu-toggle) pro viditelnost */
-.menu-toggle {
-    z-index: 1001; 
-    position: fixed; 
-    top: 15px;
-    left: 15px;
-}
-
-.map-tools {
-    z-index: 999; /* Musí být pod sidebar-anchor (1000) */
-}
-/* ========================================================= */
-/* --- KOMPLETNÍ OPRAVA UX/UI: SIDEBAR, MAPA A AI CHAT --- */
-/* ========================================================= */
-
-/* Základní tělo a mapa */
+/* Zajištění plné obrazovky pro mapu a tělo */
 html, body, #map {
     height: 100%;
     margin: 0;
     padding: 0;
     width: 100%;
-    overflow: hidden; /* Zabrání posunu celého okna */
+    overflow: hidden; 
+    background-color: var(--color-bg-dark);
 }
 
-/* ------------------- SIDEBAR KONTROLA ------------------- */
+/* ========================================================= */
+/* --- UI KOMPONENTY (Tlačítka, Form Elements) --- */
+/* ========================================================= */
+.form-input, .form-select {
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #475569; /* Slate 600 */
+    background-color: #334155; /* Slate 700 */
+    color: var(--color-text);
+    font-size: 1em;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+.btn-p {
+    background-color: var(--color-primary);
+    color: white;
+}
+.btn-p:hover { background-color: #0056b3; }
+
+.btn-s {
+    background-color: var(--color-secondary);
+    color: white;
+}
+.btn-s:hover { background-color: #5a6268; }
+
+.btn-success {
+    background-color: var(--color-success);
+    color: white;
+}
+.btn-success:hover { background-color: #1e7e34; }
+
+.btn-warning {
+    background-color: var(--color-warning);
+    color: var(--color-text-dark);
+}
+
+.btn-sm {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    width: auto;
+}
+
+.btn-icon {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.badge {
+    background-color: var(--color-success);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+    font-size: 0.8em;
+    font-weight: normal;
+}
+
+/* ========================================================= */
+/* --- SIDEBAR KONTROLA (Filtry, Trasa) --- */
+/* ========================================================= */
 
 /* Menu Toggle (Tlačítko pro otevření/zavření) */
 .menu-toggle {
@@ -734,7 +113,7 @@ html, body, #map {
     top: 15px;
     left: 15px;
     z-index: 1001;
-    background-color: #1e293b;
+    background-color: var(--color-primary);
     color: white;
     border: none;
     border-radius: 50%;
@@ -776,6 +155,41 @@ html, body, #map {
     flex-direction: column;
 }
 
+/* Logo a záhlaví */
+.header-top {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-compact {
+    display: flex;
+    align-items: center;
+}
+.logo-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+.brand-text h1 {
+    font-size: 1.2em;
+    margin: 0;
+    color: white;
+}
+.brand-text p {
+    font-size: 0.8em;
+    margin: 0;
+    color: var(--color-secondary);
+}
+
+
 /* Oprava scrollu menu */
 .menu-items {
     flex-grow: 1; 
@@ -802,6 +216,11 @@ html, body, #map {
     align-items: center;
     justify-content: space-between;
 }
+.acc-trigger .m-icon {
+    margin-right: 10px;
+    color: var(--color-primary);
+}
+
 
 /* Tělo akordeonu - ZAJIŠTĚNÍ ZAVŘENÉHO STAVU */
 .acc-section .acc-body {
@@ -818,26 +237,250 @@ html, body, #map {
 }
 
 /* Otočení šipky pro aktivní stav */
+.acc-section .chevron {
+    transition: transform 0.3s ease-in-out;
+}
 .acc-section.active .chevron {
     transform: rotate(180deg);
 }
 
-/* ------------------- AI PLOVOUCÍ CHAT ------------------- */
+
+/* ------------------- STATISTIKY ------------------- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.stat-box {
+    background: #334155;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-box p {
+    margin: 0 0 5px 0;
+    font-size: 0.85em;
+    color: var(--color-secondary);
+}
+.stat-box b {
+    font-size: 1.5em;
+    color: var(--color-primary);
+}
+.stats-footer-note {
+    font-size: 0.75em;
+    color: var(--color-secondary);
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 0;
+}
+
+/* ------------------- SEZNAM TRASY ------------------- */
+
+.route-actions {
+    padding: 15px 20px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.route-actions .btn {
+    width: 50%;
+    padding: 8px 10px;
+}
+#route-list {
+    min-height: 50px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+
+.route-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #475569;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    color: white;
+    justify-content: space-between;
+}
+.route-item small {
+    color: #cbd5e1;
+    margin-left: 10px;
+}
+.route-item .btn-remove {
+    background-color: var(--color-error);
+    margin-left: auto;
+}
+
+/* ========================================================= */
+/* --- DETAIL PANEL (Po kliknutí na marker) --- */
+/* ========================================================= */
+
+.detail-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 0;
+    padding: 0 20px;
+    background: rgba(30, 41, 59, 0.95); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    z-index: 999;
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+    overflow: hidden;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.detail-panel.visible {
+    max-height: 80vh; 
+    padding: 20px;
+}
+
+.detail-panel h3 {
+    margin-top: 0;
+    color: var(--color-primary);
+}
+.detail-subtitle {
+    font-size: 0.9em;
+    color: var(--color-secondary);
+    margin-bottom: 15px;
+}
+.detail-panel .stat-box b {
+    color: white; 
+}
+
+.detail-panel .stat-box p {
+    color: var(--color-secondary);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+.action-buttons .btn {
+    width: 100%;
+}
+.btn-close-detail {
+    margin-top: 15px;
+}
+
+
+/* ========================================================= */
+/* --- MAPOVÉ NÁSTROJE (Vycentrování) --- */
+/* ========================================================= */
+
+.map-tools {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 500;
+}
+.tool-btn {
+    background-color: white;
+    color: var(--color-bg-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+
+/* ========================================================= */
+/* --- TOAST NOTIFIKACE --- */
+/* ========================================================= */
+
+#toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 2000;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 30px;
+    font-size: 17px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#toast.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+#toast.error {
+    background-color: var(--color-error);
+}
+#toast.warning {
+    background-color: var(--color-warning);
+    color: var(--color-text-dark);
+}
+#toast.success {
+    background-color: var(--color-success);
+}
+#toast.info {
+    background-color: var(--color-primary);
+}
+
+#toast.permanent-warning {
+    visibility: visible;
+    animation: none;
+    background-color: var(--color-warning);
+    color: var(--color-text-dark);
+    bottom: 0;
+    border-radius: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+/* Keyframes pro animaci Toastu */
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadeout {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+
+/* ========================================================= */
+/* --- AI PLOVOUCÍ CHAT (Oprava pozice a zobrazení) --- */
+/* ========================================================= */
 
 .floating-chat-anchor {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 990; /* Pod sidebarem, ale nad mapou */
+    z-index: 990; /* Pod sidebarem */
 }
 
 .ai-toggle-btn {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
-    background-color: #007bff; /* Modrá */
+    background-color: var(--color-primary); 
     color: white;
-    font-size: 1.5em;
+    font-size: 1.4em;
     border: none;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
     cursor: pointer;
@@ -850,7 +493,7 @@ html, body, #map {
 
 .chat-panel {
     position: absolute;
-    bottom: 70px; /* Nad plovoucí ikonou */
+    bottom: 75px; /* Nad plovoucí ikonou */
     right: 0;
     width: 300px;
     max-height: 400px;
@@ -861,6 +504,7 @@ html, body, #map {
     flex-direction: column;
     overflow: hidden;
     color: #e2e8f0;
+    z-index: 995;
 }
 
 .chat-panel.visible {
@@ -873,6 +517,19 @@ html, body, #map {
     align-items: center;
     padding: 10px 15px;
     border-bottom: 1px solid #4a5568;
+    background: #1e293b;
+}
+.chat-header h4 {
+    margin: 0;
+    font-size: 1em;
+}
+
+.chat-note {
+    font-size: 0.75em;
+    color: var(--color-secondary);
+    padding: 5px 15px;
+    margin: 0;
+    text-align: center;
 }
 
 .close-chat-btn {
@@ -888,6 +545,8 @@ html, body, #map {
     overflow-y: auto;
     padding: 10px 15px;
     height: 250px; /* Pevná výška chatovacího okna */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Styl pro zprávy */
@@ -895,35 +554,47 @@ html, body, #map {
     margin: 5px 0;
     padding: 8px 12px;
     border-radius: 15px;
-    max-width: 80%;
+    max-width: 85%;
     line-height: 1.4;
+    word-wrap: break-word; 
+    white-space: pre-wrap;
 }
 .msg.user {
     background-color: #007bff;
     color: white;
     margin-left: auto;
-    border-bottom-right-radius: 0;
+    border-bottom-right-radius: 5px;
+    border-top-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    border-top-left-radius: 15px;
 }
 .msg.bot {
     background-color: #4a5568;
     color: white;
     margin-right: auto;
-    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 5px;
+    border-top-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    border-top-right-radius: 15px;
 }
 
 .chat-input-wrapper {
     display: flex;
     padding: 10px;
     border-top: 1px solid #4a5568;
-    background: #2d3748;
+    background: #1e293b;
 }
 
 .chat-input-wrapper .form-input {
     flex-grow: 1;
+    margin-bottom: 0; 
     margin-right: 5px;
     border-radius: 20px;
     padding: 8px 15px;
-    border: 1px solid #4a5568;
-    background: #1a202c;
+    border: 1px solid #475569;
+    background: #334155;
     color: white;
+}
+.chat-input-wrapper .btn-sm {
+    width: auto;
 }
