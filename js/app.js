@@ -4,10 +4,10 @@ import { initializeMap, renderMarkers, filterAreals, recenterMap } from './map-c
 import { initUI, updateStats, getChatInput, getChatSendBtn, addChatMessage } from './ui-controller.js';
 
 // --- GLOBÁLNÍ KONFIGURACE A PROMĚNNÉ ---
-const AREAL_API_URL = 'data/arealy.json'; // Původní zdroj dat areálů
-const MANUAL_API_URL = 'data/manual.json'; // NOVÝ: Zdroj dat manuálu
-let allArealsCache = []; // Zásobník pro všechna původní data areálů
-let manualDataCache = []; // NOVÝ: Zásobník pro data z manuálu
+const AREAL_API_URL = 'data/arealy.json'; // Zdroj dat areálů
+const MANUAL_API_URL = 'data/manual.json'; // Zdroj dat manuálu
+let allArealsCache = []; 
+let manualDataCache = []; 
 
 // --- DOM ELEMENTY ---
 const searchInput = document.getElementById('search-input');
@@ -47,7 +47,7 @@ export function showOfflineWarning() {
 
 // --- DATOVÁ LOGIKA ---
 
-/** Načte data areálů z lokálního JSON souboru. */
+/** Načte data areálů. Vrací prázdné pole v případě chyby. */
 async function fetchArealData() {
     try {
         const response = await fetch(AREAL_API_URL);
@@ -66,11 +66,12 @@ async function fetchArealData() {
     } catch (error) {
         console.error("Kritická chyba při načítání areálů:", error);
         showToast('Kritická chyba načítání areálů. Pracujete v offline režimu bez nových dat.', 'error');
+        allArealsCache = [];
         return [];
     }
 }
 
-/** NOVÁ FUNKCE: Načte data manuálu pro AI. */
+/** Načte data manuálu pro AI. Neháže chybu, aby neshodil Promise.all. */
 async function fetchManualData() {
     try {
         const response = await fetch(MANUAL_API_URL);
@@ -81,7 +82,7 @@ async function fetchManualData() {
         showToast('Manuál pro XROT 95 EVO načten.', 'info');
     } catch (error) {
         console.error("Chyba při načítání manuálu:", error);
-        manualDataCache = [];
+        manualDataCache = []; // Nastavíme prázdné pole
     }
 }
 
@@ -106,16 +107,14 @@ function applyFilters(mapInstance, allAreals) {
 // --- LOGIKA CHATBOTA (ManuAI) ---
 
 /**
- * NOVÁ LOGIKA: Simulační funkce pro odpověď Barbieri e-ManuAI,
+ * Simulační funkce pro odpověď Barbieri e-ManuAI,
  * která nyní prohledává manualDataCache.
- * @param {string} userQuery - Dotaz uživatele.
  */
 function handleAiQuery(userQuery) {
     addChatMessage(userQuery, 'user');
     const inputField = getChatInput();
-    inputField.value = ''; // Vyčistit pole
+    inputField.value = '';
 
-    // Zpracování dotazu
     const queryLower = userQuery.toLowerCase().trim();
     let botResponse = "Omlouvám se, na Váš dotaz nemám v manuálu XROT 95 EVO přímou odpověď. Zkuste hledat klíčová slova jako 'olej', 'chyba' nebo 'rtk'.";
     
@@ -128,7 +127,6 @@ function handleAiQuery(userQuery) {
     if (foundEntry) {
         botResponse = `[${foundEntry.keyword.toUpperCase()}]: ${foundEntry.response} (Sekce: ${foundEntry.detail_link})`;
     } else if (queryLower.includes('trasa') || queryLower.includes('areál') || queryLower.includes('mapa')) {
-        // Stále řešíme mimo-manuálové dotazy
         botResponse = "Jsem určen primárně pro manuál k sekačce XROT. Pro práci s trasami a areály použijte prosím mapu a filtry v hlavním menu.";
     }
 
@@ -176,22 +174,26 @@ function setupListeners(mapInstance, allAreals) {
 // --- INICIALIZACE A SPUŠTĚNÍ ---
 
 async function init() {
-    // Načtení obou sad dat souběžně
-    const [allAreals] = await Promise.all([
+    // KRITICKÁ OPRAVA: Použijeme await Promise.all, ale de-strukturování provedeme
+    // z globální proměnné allArealsCache, která je plněna v fetchArealData.
+    // Zaručuje spuštění i při chybě v jednom z fetchů.
+    await Promise.all([
         fetchArealData(),
-        fetchManualData() // NOVÉ
+        fetchManualData() 
     ]);
+    
+    const allAreals = allArealsCache;
 
     if (allAreals.length === 0) {
+        // Inicializujeme alespoň mapu a UI, i když nemáme markery
         const mapInstance = initializeMap(allAreals);
         initUI();
         return;
     }
 
-    // Callback pro ui-controller.js
+    // Callback pro ui-controller.js: Vynutí překreslení mapy
     const updateMapMarkers = () => {
         applyFilters(mapInstance, allAreals);
-        // showToast('Mapa aktualizována dle změn trasy.', 'info');
     };
     
     // 1. Inicializace Mapy a UI
@@ -211,7 +213,7 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
-// js/app.js (Registrace Service Workeru)
+
 
 // --- REGISTRACE SERVICE WORKERU PRO PWA ---
 if ('serviceWorker' in navigator) {
