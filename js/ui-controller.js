@@ -28,6 +28,7 @@ function saveRouteToStorage() {
 
 // --- GLOBÁLNÍ STAV ---
 export let routeList = getRouteFromStorage();
+let mapUpdateCallback = () => {}; // Callback pro aktualizaci mapy z app.js
 
 // --- DOM ELEMENTY ---
 const routeListElement = document.getElementById('route-list');
@@ -37,7 +38,6 @@ const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.getElementById('main-panel');
 const menuIcon = document.getElementById('menu-icon');
 
-// NOVÉ ELEMENTY PRO STATISTIKY
 const statCountElement = document.getElementById('stat-count');
 const statAreaElement = document.getElementById('stat-area');
 
@@ -45,20 +45,15 @@ const statAreaElement = document.getElementById('stat-area');
 
 /**
  * Aktualizuje statistické údaje na základě filtrovaného seznamu areálů.
- * @param {Array<Object>} areals - Seznam aktuálně zobrazených areálů.
  */
 export function updateStats(areals) {
-    // 1. Počet areálů
     const count = areals.length;
     statCountElement.textContent = count;
 
-    // 2. Celková výměra (v m2)
     const totalAreaM2 = areals.reduce((sum, areal) => sum + areal.plocha_m2, 0);
     
-    // Formátování pro lepší čitelnost (např. 125000 -> 125.0k)
     let formattedArea;
     if (totalAreaM2 >= 1000) {
-        // Zobrazit v tisících
         formattedArea = (totalAreaM2 / 1000).toFixed(1) + 'k';
     } else {
         formattedArea = totalAreaM2.toFixed(0);
@@ -107,6 +102,7 @@ export function addArealToRoute(areal) {
     renderRouteList();
     saveRouteToStorage(); 
     showToast(`Areál ${areal.jmeno} přidán do trasy.`);
+    mapUpdateCallback(); // Aktualizujeme mapu
 }
 
 /** Odebere areál ze seznamu trasy. */
@@ -117,6 +113,7 @@ export function removeArealFromRoute(id) {
         renderRouteList();
         saveRouteToStorage(); 
         showToast(`Areál ${removed.jmeno} odstraněn z trasy.`);
+        mapUpdateCallback(); // Aktualizujeme mapu
     }
 }
 
@@ -126,17 +123,16 @@ export function clearRoute() {
     renderRouteList();
     saveRouteToStorage(); 
     showToast('Trasa byla vyčištěna.', 'warning');
+    mapUpdateCallback(); // Aktualizujeme mapu
 }
 
-// --- FUNKCE PRO MANUÁL A AI (Stuby pro propojení v app.js) ---
+// --- FUNKCE PRO MANUÁL A AI ---
 
 export function getChatInput() { return document.getElementById('chat-input'); }
 export function getChatSendBtn() { return document.getElementById('chat-send-btn'); }
 
 /**
  * Přidá zprávu do chatovacího okna.
- * @param {string} text Zpráva k zobrazení
- * @param {string} sender 'user' nebo 'bot'
  */
 export function addChatMessage(text, sender) {
     const chatBody = document.getElementById('chat-body');
@@ -150,7 +146,11 @@ export function addChatMessage(text, sender) {
 // --- INICIALIZACE ---
 
 /** Inicializuje UI prvky a posluchače událostí. */
-export function initUI() { // allAreals již nepotřebujeme zde
+export function initUI(onRouteChanged) { 
+    if (onRouteChanged) {
+        mapUpdateCallback = onRouteChanged; // Uložíme callback z app.js
+    }
+    
     // 1. Načtení trasy a vykreslení při startu 
     renderRouteList(); 
     
@@ -171,54 +171,4 @@ export function initUI() { // allAreals již nepotřebujeme zde
             section.classList.toggle('active');
         });
     });
-}
-// js/ui-controller.js (Úryvek s úpravami)
-
-// ... (existující importy a globální stav) ...
-
-// --- NOVÝ GLOBÁLNÍ STAV pro externí funkci ---
-let mapUpdateCallback = () => {}; // Defaultní prázdná funkce
-
-// --- FUNKCE PRO SPRÁVU TRASY ---
-
-// ... (funkce renderRouteList, addArealToRoute zůstávají stejné) ...
-
-/** Odebere areál ze seznamu trasy. */
-export function removeArealFromRoute(id) {
-    const index = routeList.findIndex(a => a.id === id);
-    if (index !== -1) {
-        const removed = routeList.splice(index, 1)[0];
-        renderRouteList();
-        saveRouteToStorage(); 
-        showToast(`Areál ${removed.jmeno} odstraněn z trasy.`);
-        
-        // NOVINKA: Informujeme aplikaci, že se trasa změnila
-        mapUpdateCallback();
-    }
-}
-
-/** Vyčistí celou trasu. */
-export function clearRoute() {
-    routeList = [];
-    renderRouteList();
-    saveRouteToStorage(); 
-    showToast('Trasa byla vyčištěna.', 'warning');
-
-    // NOVINKA: Informujeme aplikaci, že se trasa změnila
-    mapUpdateCallback();
-}
-
-// --- INICIALIZACE ---
-
-/** Inicializuje UI prvky a posluchače událostí. */
-// NOVINKA: Přijímáme funkci pro aktualizaci mapy
-export function initUI(onRouteChanged) { 
-    if (onRouteChanged) {
-        mapUpdateCallback = onRouteChanged;
-    }
-    
-    // 1. Načtení trasy a vykreslení při startu 
-    renderRouteList(); 
-    
-    // ... (zbytek initUI zůstává stejný) ...
 }
