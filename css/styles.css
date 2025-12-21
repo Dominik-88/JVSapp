@@ -226,14 +226,15 @@ html, body, #map {
 .acc-section .acc-body {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
-    padding: 0 20px; /* Horizontální padding */
+    /* PONECHÁVÁME PADDING, aby se akordeon animoval plynule */
+    transition: max-height 0.4s ease-in-out;
+    padding: 0 20px;
 }
 
 /* Aktivní (otevřený) stav */
 .acc-section.active .acc-body {
     max-height: 500px; /* Dostatečná výška pro zobrazení obsahu */
-    padding: 10px 20px;
+    padding: 10px 20px; /* Nastavíme padding pro otevřený stav */
 }
 
 /* Otočení šipky pro aktivní stav */
@@ -294,6 +295,8 @@ html, body, #map {
     max-height: 200px;
     overflow-y: auto;
     padding-bottom: 10px;
+    padding-left: 20px; /* Přidáno pro lepší zarovnání */
+    padding-right: 20px;
 }
 
 .route-item {
@@ -325,7 +328,8 @@ html, body, #map {
     left: 0;
     width: 100%;
     max-height: 0;
-    padding: 0 20px;
+    /* Ponechat padding 0 pro skrytý stav */
+    padding: 0; 
     background: rgba(30, 41, 59, 0.95); 
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -339,7 +343,7 @@ html, body, #map {
 
 .detail-panel.visible {
     max-height: 80vh; 
-    padding: 20px;
+    padding: 20px; /* Nastavíme padding pro viditelný stav */
 }
 
 .detail-panel h3 {
@@ -350,6 +354,19 @@ html, body, #map {
     font-size: 0.9em;
     color: var(--color-secondary);
     margin-bottom: 15px;
+}
+
+/* Změny pro stat boxy uvnitř detailu (aby seděly vedle sebe) */
+.detail-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.detail-stats .stat-box {
+    flex: 1;
+    background: #334155;
+    padding: 10px;
+    border-radius: 6px;
 }
 .detail-panel .stat-box b {
     color: white; 
@@ -426,19 +443,11 @@ html, body, #map {
     animation: fadein 0.5s, fadeout 0.5s 2.5s;
 }
 
-#toast.error {
-    background-color: var(--color-error);
-}
-#toast.warning {
-    background-color: var(--color-warning);
-    color: var(--color-text-dark);
-}
-#toast.success {
-    background-color: var(--color-success);
-}
-#toast.info {
-    background-color: var(--color-primary);
-}
+/* OSTATNÍ TOAST STYLY (error, warning, success, info, permanent-warning) */
+#toast.error { background-color: var(--color-error); }
+#toast.warning { background-color: var(--color-warning); color: var(--color-text-dark); }
+#toast.success { background-color: var(--color-success); }
+#toast.info { background-color: var(--color-primary); }
 
 #toast.permanent-warning {
     visibility: visible;
@@ -471,7 +480,7 @@ html, body, #map {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 990; /* Pod sidebarem */
+    z-index: 990; /* Pod sidebarem, nad mapou */
 }
 
 .ai-toggle-btn {
@@ -563,7 +572,8 @@ html, body, #map {
     background-color: #007bff;
     color: white;
     margin-left: auto;
-    border-bottom-right-radius: 5px;
+    /* Úprava zaoblení pro čistější vzhled */
+    border-bottom-right-radius: 5px; 
     border-top-right-radius: 15px;
     border-bottom-left-radius: 15px;
     border-top-left-radius: 15px;
@@ -572,6 +582,7 @@ html, body, #map {
     background-color: #4a5568;
     color: white;
     margin-right: auto;
+    /* Úprava zaoblení pro čistější vzhled */
     border-bottom-left-radius: 5px;
     border-top-left-radius: 15px;
     border-bottom-right-radius: 15px;
@@ -598,3 +609,58 @@ html, body, #map {
 .chat-input-wrapper .btn-sm {
     width: auto;
 }
+
+/* ========================================================= */
+/* --- RESPONSIVNÍ ÚPRAVY PRO VĚTŠÍ OBRAZOVKY (Desktop) --- */
+/* ========================================================= */
+@media (min-width: 768px) {
+    
+    /* Větší Sidebar na desktopu je trvale viditelný a posouvá mapu */
+    .menu-toggle {
+        display: none; /* Tlačítko menu skryjeme */
+    }
+
+    .sidebar-anchor {
+        width: 320px;
+        transform: translateX(0); /* Trvale viditelný */
+        box-shadow: none;
+        background: rgba(30, 41, 59, 1.0); /* Plná barva, ne glass */
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    /* Posunutí mapy, aby nebyla pod sidebarem */
+    #map {
+        margin-left: 320px; /* Šířka sidebar */
+        width: calc(100% - 320px);
+    }
+    
+    /* Posunutí mapových nástrojů a detailního panelu */
+    .map-tools {
+        right: 15px; /* Zůstávají vpravo */
+    }
+    
+    .detail-panel {
+        width: calc(100% - 320px); /* Omezíme šířku, aby nezasahoval do sidebaru */
+        left: 320px;
+    }
+    
+    .floating-chat-anchor {
+        right: 15px; /* Umístíme chat doprava na mapě */
+    }
+}
+
+/* ========================================================= */
+/* --- OPRAVY LEAFLET PRO SPRÁVNÉ ZOBRAZENÍ --- */
+/* ========================================================= */
+.leaflet-container {
+    /* Zajišťuje správné zobrazení ikon i s custom URL */
+    font-size: 12px;
+}
+
+.leaflet-control-attribution {
+    /* Posunutí popisku, aby nebyl pod chatem/detail panelem */
+    padding-right: 10px;
+    padding-bottom: 10px;
+}
+
