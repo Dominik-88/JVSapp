@@ -37,6 +37,10 @@ const clearRouteBtn = document.getElementById('clear-route-btn');
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.getElementById('main-panel');
 const menuIcon = document.getElementById('menu-icon');
+const aiToggleBtn = document.getElementById('ai-toggle-btn'); // NOVÝ PRVEK
+const aiChatPanel = document.getElementById('ai-chat-panel'); // NOVÝ PRVEK
+const closeAiChatBtn = document.getElementById('close-ai-chat-btn'); // NOVÝ PRVEK
+
 
 const statCountElement = document.getElementById('stat-count');
 const statAreaElement = document.getElementById('stat-area');
@@ -172,5 +176,14 @@ export function initUI(onRouteChanged) {
             // Toggle třídy 'active' pro zobrazení/skrytí acc-body
             section.classList.toggle('active');
         });
+    });
+
+    // 5. Posluchače pro plovoucí AI chat (NOVÉ)
+    aiToggleBtn.addEventListener('click', () => {
+        aiChatPanel.classList.toggle('visible');
+    });
+
+    closeAiChatBtn.addEventListener('click', () => {
+        aiChatPanel.classList.remove('visible');
     });
 }
