@@ -1,12 +1,13 @@
 // js/app.js (Hlavní spouštěcí modul)
 
 import { initializeMap, renderMarkers, filterAreals, recenterMap } from './map-controller.js';
-// NOVINKA: initUI nyní přijímá callback
 import { initUI, updateStats, getChatInput, getChatSendBtn, addChatMessage } from './ui-controller.js';
 
 // --- GLOBÁLNÍ KONFIGURACE A PROMĚNNÉ ---
-const API_URL = 'data/arealy.json'; // Lokální zdroj dat
-let allArealsCache = []; // Zásobník pro všechna původní data
+const AREAL_API_URL = 'data/arealy.json'; // Původní zdroj dat areálů
+const MANUAL_API_URL = 'data/manual.json'; // NOVÝ: Zdroj dat manuálu
+let allArealsCache = []; // Zásobník pro všechna původní data areálů
+let manualDataCache = []; // NOVÝ: Zásobník pro data z manuálu
 
 // --- DOM ELEMENTY ---
 const searchInput = document.getElementById('search-input');
@@ -21,7 +22,6 @@ const toastElement = document.getElementById('toast');
 
 /** Zobrazí dočasné upozornění (Toast). */
 export function showToast(message, type = 'success') {
-    // Odstranění trvalého varování, pokud bylo zobrazeno
     if (toastElement.classList.contains('permanent-warning')) {
         toastElement.classList.remove('permanent-warning');
         toastElement.textContent = '';
@@ -30,7 +30,6 @@ export function showToast(message, type = 'success') {
     toastElement.textContent = message;
     toastElement.className = `show ${type}`;
     
-    // Schovat po 3 sekundách, pokud se nejedná o trvalé varování
     setTimeout(() => {
         if (!toastElement.classList.contains('permanent-warning')) {
             toastElement.className = toastElement.className.replace('show', '');
@@ -51,13 +50,12 @@ export function showOfflineWarning() {
 /** Načte data areálů z lokálního JSON souboru. */
 async function fetchArealData() {
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(AREAL_API_URL);
         if (!response.ok) {
-            throw new Error(`Chyba načítání dat: ${response.statusText}`);
+            throw new Error(`Chyba načítání dat areálů: ${response.statusText}`);
         }
         allArealsCache = await response.json();
         
-        // Přidání unikátního ID pro snadnější práci s trasou
         allArealsCache = allArealsCache.map((areal, index) => ({
             ...areal,
             id: areal.cislo_popisne + '_' + areal.gps_rtk.lat.toFixed(4)
@@ -66,15 +64,30 @@ async function fetchArealData() {
         showToast('Data areálů úspěšně načtena.');
         return allArealsCache;
     } catch (error) {
-        console.error("Kritická chyba při načítání dat:", error);
-        showToast('Kritická chyba načítání dat. Pracujete v offline režimu bez nových dat.', 'error');
+        console.error("Kritická chyba při načítání areálů:", error);
+        showToast('Kritická chyba načítání areálů. Pracujete v offline režimu bez nových dat.', 'error');
         return [];
     }
 }
 
+/** NOVÁ FUNKCE: Načte data manuálu pro AI. */
+async function fetchManualData() {
+    try {
+        const response = await fetch(MANUAL_API_URL);
+        if (!response.ok) {
+            throw new Error(`Chyba načítání manuálu: ${response.statusText}`);
+        }
+        manualDataCache = await response.json();
+        showToast('Manuál pro XROT 95 EVO načten.', 'info');
+    } catch (error) {
+        console.error("Chyba při načítání manuálu:", error);
+        manualDataCache = [];
+    }
+}
+
+
 /**
  * Aplikuje filtry na seznam areálů a aktualizuje mapu a statistiky.
- * MapInstance a allAreals jsou předány z init().
  */
 function applyFilters(mapInstance, allAreals) {
     const filters = {
@@ -83,14 +96,8 @@ function applyFilters(mapInstance, allAreals) {
         kategorie: filterKategorie.value
     };
 
-    // 1. Filtrování areálů
     const filteredAreals = filterAreals(mapInstance, allAreals, filters);
-
-    // 2. Aktualizace Statistik
     updateStats(filteredAreals); 
-
-    // 3. Zpětná vazba pro uživatele
-    // showToast(`Zobrazeno ${filteredAreals.length} areálů.`, 'info'); // Již není potřeba, překreslení mluví za vše
     
     return filteredAreals;
 }
@@ -99,7 +106,8 @@ function applyFilters(mapInstance, allAreals) {
 // --- LOGIKA CHATBOTA (ManuAI) ---
 
 /**
- * Simulační funkce pro odpověď Barbieri e-ManuAI.
+ * NOVÁ LOGIKA: Simulační funkce pro odpověď Barbieri e-ManuAI,
+ * která nyní prohledává manualDataCache.
  * @param {string} userQuery - Dotaz uživatele.
  */
 function handleAiQuery(userQuery) {
@@ -107,23 +115,25 @@ function handleAiQuery(userQuery) {
     const inputField = getChatInput();
     inputField.value = ''; // Vyčistit pole
 
-    // Simulace zátěže (odpověď přijde po chvíli)
+    // Zpracování dotazu
+    const queryLower = userQuery.toLowerCase().trim();
+    let botResponse = "Omlouvám se, na Váš dotaz nemám v manuálu XROT 95 EVO přímou odpověď. Zkuste hledat klíčová slova jako 'olej', 'chyba' nebo 'rtk'.";
+    
+    // Prohledání dat z manuálu
+    const foundEntry = manualDataCache.find(entry => {
+        // Kontrola, zda některý tag obsahuje část dotazu
+        return entry.tags.some(tag => queryLower.includes(tag));
+    });
+
+    if (foundEntry) {
+        botResponse = `[${foundEntry.keyword.toUpperCase()}]: ${foundEntry.response} (Sekce: ${foundEntry.detail_link})`;
+    } else if (queryLower.includes('trasa') || queryLower.includes('areál') || queryLower.includes('mapa')) {
+        // Stále řešíme mimo-manuálové dotazy
+        botResponse = "Jsem určen primárně pro manuál k sekačce XROT. Pro práci s trasami a areály použijte prosím mapu a filtry v hlavním menu.";
+    }
+
+    // Simulace zátěže
     setTimeout(() => {
-        const queryLower = userQuery.toLowerCase();
-        let botResponse;
-
-        if (queryLower.includes('olej')) {
-            botResponse = "Pro model XROT 95 EVO doporučujeme syntetický olej 5W-30. Pravidelná výměna je po 100 provozních hodinách.";
-        } else if (queryLower.includes('chyba')) {
-            botResponse = "Pokud se zobrazí chybový kód E04, zkontrolujte nejdříve stav napětí baterie. Pokud je napětí v pořádku, proveďte restart systému.";
-        } else if (queryLower.includes('rtk')) {
-            botResponse = "RTK GPS slouží k dosažení centimetrové přesnosti. Zkontrolujte, zda je správně připojena RTK anténa a zda máte stabilní spojení s referenční stanicí (zelená kontrolka).";
-        } else if (queryLower.includes('trasa') || queryLower.includes('areál')) {
-            botResponse = "Jsem určen primárně pro manuál k sekačce XROT. Pro plánování trasy použijte prosím sekci 'Plánovaná trasa' v hlavním menu.";
-        } else {
-            botResponse = "Omlouvám se, na Váš dotaz nemám v manuálu XROT 95 EVO přímou odpověď. Zeptejte se na klíčové pojmy jako 'olej', 'chyba' nebo 'rtk'.";
-        }
-
         addChatMessage(botResponse, 'bot');
     }, 800);
 }
@@ -140,7 +150,6 @@ function setupListeners(mapInstance, allAreals) {
     
     // 2. Tlačítko pro vycentrování mapy
     recenterMapBtn.addEventListener('click', () => {
-        // Vycentrujeme mapu na aktuálně filtrované areály
         recenterMap(mapInstance, applyFilters(mapInstance, allAreals));
     });
 
@@ -148,21 +157,18 @@ function setupListeners(mapInstance, allAreals) {
     const chatInput = getChatInput();
     const chatSendBtn = getChatSendBtn();
 
-    // Odeslání kliknutím
-    chatSendBtn.addEventListener('click', () => {
+    // Odeslání kliknutím a Enterem
+    const sendQuery = () => {
         const query = chatInput.value.trim();
         if (query.length > 0) {
             handleAiQuery(query);
         }
-    });
-
-    // Odeslání stisknutím klávesy Enter
+    };
+    
+    chatSendBtn.addEventListener('click', sendQuery);
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            const query = chatInput.value.trim();
-            if (query.length > 0) {
-                handleAiQuery(query);
-            }
+            sendQuery();
         }
     });
 }
@@ -170,30 +176,31 @@ function setupListeners(mapInstance, allAreals) {
 // --- INICIALIZACE A SPUŠTĚNÍ ---
 
 async function init() {
-    const allAreals = await fetchArealData();
+    // Načtení obou sad dat souběžně
+    const [allAreals] = await Promise.all([
+        fetchArealData(),
+        fetchManualData() // NOVÉ
+    ]);
+
     if (allAreals.length === 0) {
         const mapInstance = initializeMap(allAreals);
         initUI();
         return;
     }
 
-    // NOVÁ FUNKCE: Callback pro ui-controller.js
-    // Vynutí překreslení mapy s aktuálními filtry po změně trasy
+    // Callback pro ui-controller.js
     const updateMapMarkers = () => {
         applyFilters(mapInstance, allAreals);
-        showToast('Mapa aktualizována dle změn trasy.', 'info');
+        // showToast('Mapa aktualizována dle změn trasy.', 'info');
     };
     
     // 1. Inicializace Mapy a UI
     const mapInstance = initializeMap(allAreals);
-    // Důležité: Předání callbacku do initUI!
     initUI(updateMapMarkers); 
     
     // 2. Počáteční vykreslení a statistiky
     const initialFilters = { search: '', okres: 'all', kategorie: 'all' };
     const initialFiltered = filterAreals(mapInstance, allAreals, initialFilters);
-    
-    // Počáteční aktualizace statistik!
     updateStats(initialFiltered); 
 
     // 3. Nastavení posluchačů událostí
