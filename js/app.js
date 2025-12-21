@@ -9,7 +9,7 @@ const MANUAL_API_URL = 'data/manual.json'; // Zdroj dat manuálu
 let allArealsCache = []; 
 let manualDataCache = []; 
 
-// --- DOM ELEMENTY ---
+// --- DOM ELEMENTY (Připojení k prvkům z index.html) ---
 const searchInput = document.getElementById('search-input');
 const filterOkres = document.getElementById('filter-okres');
 const filterKategorie = document.getElementById('filter-kategorie');
@@ -56,12 +56,14 @@ async function fetchArealData() {
         }
         allArealsCache = await response.json();
         
+        // KRITICKÁ ZMĚNA: ID se nyní generuje z názvu a indexu, ne z 'cislo_popisne'.
         allArealsCache = allArealsCache.map((areal, index) => ({
             ...areal,
-            id: areal.cislo_popisne + '_' + areal.gps_rtk.lat.toFixed(4)
+            // Vytvoříme unikátní, URL-přátelský ID
+            id: areal.jmeno.replace(/\s/g, '_').toLowerCase() + '_' + index
         }));
 
-        showToast('Data areálů úspěšně načtena.');
+        showToast(`Data ${allArealsCache.length} areálů úspěšně načtena.`);
         return allArealsCache;
     } catch (error) {
         console.error("Kritická chyba při načítání areálů:", error);
@@ -71,7 +73,7 @@ async function fetchArealData() {
     }
 }
 
-/** Načte data manuálu pro AI. Neháže chybu, aby neshodil Promise.all. */
+/** Načte data manuálu pro AI. Interně ošetřuje chyby, aby neshodil Promise.all. */
 async function fetchManualData() {
     try {
         const response = await fetch(MANUAL_API_URL);
@@ -107,8 +109,7 @@ function applyFilters(mapInstance, allAreals) {
 // --- LOGIKA CHATBOTA (ManuAI) ---
 
 /**
- * Simulační funkce pro odpověď Barbieri e-ManuAI,
- * která nyní prohledává manualDataCache.
+ * Simulační funkce pro odpověď Barbieri e-ManuAI, která prohledává manualDataCache.
  */
 function handleAiQuery(userQuery) {
     addChatMessage(userQuery, 'user');
@@ -118,9 +119,8 @@ function handleAiQuery(userQuery) {
     const queryLower = userQuery.toLowerCase().trim();
     let botResponse = "Omlouvám se, na Váš dotaz nemám v manuálu XROT 95 EVO přímou odpověď. Zkuste hledat klíčová slova jako 'olej', 'chyba' nebo 'rtk'.";
     
-    // Prohledání dat z manuálu
+    // Prohledání dat z manuálu na základě tagů
     const foundEntry = manualDataCache.find(entry => {
-        // Kontrola, zda některý tag obsahuje část dotazu
         return entry.tags.some(tag => queryLower.includes(tag));
     });
 
@@ -174,31 +174,29 @@ function setupListeners(mapInstance, allAreals) {
 // --- INICIALIZACE A SPUŠTĚNÍ ---
 
 async function init() {
-    // KRITICKÁ OPRAVA: Použijeme await Promise.all, ale de-strukturování provedeme
-    // z globální proměnné allArealsCache, která je plněna v fetchArealData.
-    // Zaručuje spuštění i při chybě v jednom z fetchů.
+    // KRITICKÁ OPRAVA: Načteme data. Promise.all by neměl selhat, protože fetch funkce obsluhují chyby.
     await Promise.all([
         fetchArealData(),
         fetchManualData() 
     ]);
     
+    // Data areálů získáme z globální proměnné po jejich naplnění
     const allAreals = allArealsCache;
 
-    if (allAreals.length === 0) {
-        // Inicializujeme alespoň mapu a UI, i když nemáme markery
-        const mapInstance = initializeMap(allAreals);
-        initUI();
-        return;
-    }
+    // Inicializujeme UI a mapu bez ohledu na to, zda data areálů selhala
+    const mapInstance = initializeMap(allAreals);
 
     // Callback pro ui-controller.js: Vynutí překreslení mapy
     const updateMapMarkers = () => {
         applyFilters(mapInstance, allAreals);
     };
-    
-    // 1. Inicializace Mapy a UI
-    const mapInstance = initializeMap(allAreals);
     initUI(updateMapMarkers); 
+
+    if (allAreals.length === 0) {
+        // Zobrazíme upozornění, ale UI a mapa je funkční
+        showToast('Mapa byla inicializována, ale chybí data areálů.', 'error');
+        return; 
+    }
     
     // 2. Počáteční vykreslení a statistiky
     const initialFilters = { search: '', okres: 'all', kategorie: 'all' };
