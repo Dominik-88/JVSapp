@@ -172,3 +172,53 @@ export function initUI() { // allAreals již nepotřebujeme zde
         });
     });
 }
+// js/ui-controller.js (Úryvek s úpravami)
+
+// ... (existující importy a globální stav) ...
+
+// --- NOVÝ GLOBÁLNÍ STAV pro externí funkci ---
+let mapUpdateCallback = () => {}; // Defaultní prázdná funkce
+
+// --- FUNKCE PRO SPRÁVU TRASY ---
+
+// ... (funkce renderRouteList, addArealToRoute zůstávají stejné) ...
+
+/** Odebere areál ze seznamu trasy. */
+export function removeArealFromRoute(id) {
+    const index = routeList.findIndex(a => a.id === id);
+    if (index !== -1) {
+        const removed = routeList.splice(index, 1)[0];
+        renderRouteList();
+        saveRouteToStorage(); 
+        showToast(`Areál ${removed.jmeno} odstraněn z trasy.`);
+        
+        // NOVINKA: Informujeme aplikaci, že se trasa změnila
+        mapUpdateCallback();
+    }
+}
+
+/** Vyčistí celou trasu. */
+export function clearRoute() {
+    routeList = [];
+    renderRouteList();
+    saveRouteToStorage(); 
+    showToast('Trasa byla vyčištěna.', 'warning');
+
+    // NOVINKA: Informujeme aplikaci, že se trasa změnila
+    mapUpdateCallback();
+}
+
+// --- INICIALIZACE ---
+
+/** Inicializuje UI prvky a posluchače událostí. */
+// NOVINKA: Přijímáme funkci pro aktualizaci mapy
+export function initUI(onRouteChanged) { 
+    if (onRouteChanged) {
+        mapUpdateCallback = onRouteChanged;
+    }
+    
+    // 1. Načtení trasy a vykreslení při startu 
+    renderRouteList(); 
+    
+    // ... (zbytek initUI zůstává stejný) ...
+}
